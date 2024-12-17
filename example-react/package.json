@@ -1,0 +1,46 @@
+{
+  "name": "example-react",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@arweave-wallet-kit/arconnect-strategy": "^0.1.0",
+    "@arweave-wallet-kit/browser-wallet-strategy": "^0.1.0",
+    "@arweave-wallet-kit/core": "^0.1.0",
+    "@arweave-wallet-kit/othent-strategy": "^0.1.0",
+    "@arweave-wallet-kit/react": "^0.1.0",
+    "@arweave-wallet-kit/styles": "^0.1.0",
+    "capsule-js": "link:..",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^11.0.20",
+    "immer": "^10.0.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-dropzone": "^14.3.5",
+    "react-icons": "^5.0.1",
+    "react-inlinesvg": "^4.1.5",
+    "react-router-dom": "^6.22.3",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.6",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.1",
+    "vite": "^5.2.0",
+    "vite-plugin-node-polyfills": "^0.21.0"
+  }
+}
