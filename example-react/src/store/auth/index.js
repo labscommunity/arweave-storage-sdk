@@ -1,3 +1,5 @@
+import { getStorageApi } from "../../utils/getStorageClient"
+
 const initialAuthState = {
   isLoggedIn: false,
   address: null,
@@ -16,6 +18,15 @@ const createAuthSlice = (set) => ({
       set((state) => {
         state.authState.profile = value
       }),
+    fetchProfile: async () => {
+      const storageApi = await getStorageApi()
+      const profile = await storageApi.api.getProfile()
+      if(profile.success){
+        set((state) => {
+          state.authState.profile = profile.data
+        })
+      }
+    },
     logout: () =>
       set((state) => {
         state.authState = initialAuthState

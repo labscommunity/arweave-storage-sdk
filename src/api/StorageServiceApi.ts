@@ -19,6 +19,33 @@ export class StorageServiceApi {
       throw new Error('Wallet not ready')
     }
 
+    // Check for existing valid tokens
+    const accessToken = await this.tokenStorage.getAccessToken()
+    const refreshToken = await this.tokenStorage.getRefreshToken()
+
+    if (accessToken && refreshToken) {
+      try {
+        // Verify if the access token is still valid by making a test request
+        const response = await axios.get(`${this.apiBaseUrl}/users/me`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        })
+
+        if (response.status === 200) {
+          // Tokens are still valid, no need to login again
+          return
+        }
+
+        // If access token is expired, try to refresh
+        await this.refreshAccessToken()
+        return
+      } catch (error) {
+        // Clear invalid tokens and proceed with new login
+        this.tokenStorage.clearTokens()
+      }
+    }
+
     const nonceResponse = await axios.post(`${this.apiBaseUrl}/auth/nonce`, {
       walletAddress: this.wallet.address,
       chainType: this.wallet.chainType

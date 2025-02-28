@@ -1,15 +1,21 @@
 import { StorageApi, Configuration, Network, Token } from 'arweave-storage-sdk'
 
+let storageApiInstance = null
+
 export async function getStorageApi() {
+  if (storageApiInstance) {
+    return storageApiInstance
+  }
+
   const config = new Configuration({
     privateKey: 'use_web_wallet',
-    appName: 'arfs-js-drive',
+    appName: 'arfs-js-drive', 
     network: Network.BASE_MAINNET,
     token: Token.USDC
   })
-  const storageApi = new StorageApi(config)
+  storageApiInstance = new StorageApi(config)
 
-  await storageApi.ready
+  await storageApiInstance.ready
 
-  return storageApi
+  return storageApiInstance
 }

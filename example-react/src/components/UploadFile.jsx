@@ -3,7 +3,6 @@ import React from 'react'
 import { FiFile } from 'react-icons/fi'
 import { useGlobalStore } from '../store/globalStore'
 import BarLoader from './BarLoader'
-import { useArFS } from '../lib/arfs/arfs-context'
 import toast from 'react-hot-toast'
 
 const UploadFile = ({ isOpen, setIsOpen }) => {
@@ -11,16 +10,14 @@ const UploadFile = ({ isOpen, setIsOpen }) => {
   const [name, setName] = React.useState('')
   const [selectedFile, setSelectedFile] = React.useState(null)
   const fileRef = React.useRef(null)
-  const [setProfile, uploadFile] = useGlobalStore((state) => [state.authActions.setProfile, state.explorerActions.uploadFile])
-  const { storageClient } = useArFS()
+  const [uploadFile, fetchProfile] = useGlobalStore((state) => [state.explorerActions.uploadFile, state.authActions.fetchProfile])
   async function handleSubmit() {
     if (!name) return
 
     setIsSubmitting(true)
    try {
-    await uploadFile(selectedFile, storageClient)
-    const profile = await storageClient.api.getProfile()
-    setProfile(profile)
+    await uploadFile(selectedFile)
+    await fetchProfile()
    } catch (error) {
     toast.error(error.message)
    }

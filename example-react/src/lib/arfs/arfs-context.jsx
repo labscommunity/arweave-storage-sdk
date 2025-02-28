@@ -33,8 +33,8 @@ export function ArFSProvider({ children }) {
     const profile = await storageClient.api.getProfile()
     loginUser({
       isLoggedIn: true,
-      address: profile.walletAddress,
-      profile: profile
+      address: profile.data.walletAddress,
+      profile: profile.data
     })
 
     const arfs = new ArFSApi({ gateway: 'https://arweave.net', address: profile.walletAddress, appName: 'arfs-example' })

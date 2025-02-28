@@ -1,4 +1,5 @@
 import { getArFSClient } from '../../utils/getArFSClient'
+import { getStorageApi } from '../../utils/getStorageClient'
 import { waitFor } from '../../utils/waitFor'
 
 const initialExplorerState = {
@@ -177,7 +178,7 @@ const createExplorerSlice = (set, get) => ({
 
       await waitFor(500)
     },
-    uploadFile: async (file, storageClient) => {
+    uploadFile: async (file) => {
       const userAddress = get().authState.address
 
       if (!userAddress) {
@@ -185,10 +186,10 @@ const createExplorerSlice = (set, get) => ({
         return
       }
     
-      // const storageApi = await getStorageApi()
+      const storageApi = await getStorageApi()
 
       try {
-        const {success} = await storageClient.quickUpload(file,{
+        const {success} = await storageApi.quickUpload(file,{
           name: file.name,
           size: file.size,
           dataContentType: file.type,
