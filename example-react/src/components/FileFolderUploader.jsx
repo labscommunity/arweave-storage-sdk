@@ -13,7 +13,11 @@ export default function FileFolderUploader({ isOpen, setIsOpen }) {
     console.log({ acceptedFiles })
     setFiles(acceptedFiles)
   }, [])
-  const { getRootProps, getInputProps } = useDropzone({ onDrop })
+  const { getRootProps, getInputProps } = useDropzone({ onDrop, multiple: true })
+
+  React.useEffect(() => {
+    setFiles([])
+  }, [isOpen])
 
   function getFileIcon(fileName) {
     const extension = fileName.split('.').pop().toLowerCase()
@@ -50,6 +54,7 @@ export default function FileFolderUploader({ isOpen, setIsOpen }) {
         if (!showIncompleteFiles) setShowIncompleteFiles(true)
       }
     }
+    setFiles([])
     setIsUploading(false)
     setIsOpen(false)
   }

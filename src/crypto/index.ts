@@ -1,6 +1,6 @@
 import { ArFSApi } from '../api'
 import { EntityKey } from './EntityKey'
-import { deriveDriveKey, deriveFileKey } from './utils/keys'
+import { deriveFileKey } from './utils/keys'
 
 export class Crypto {
   api: ArFSApi
@@ -29,7 +29,8 @@ export class Crypto {
   }
 
   async getDriveKey(driveId: string) {
-    return deriveDriveKey(this.api.wallet, driveId)
+    console.log({ driveId })
+    // return deriveDriveKey(this.api.wallet, driveId)
   }
 
   async getFileKey(driveKey: EntityKey, fileId: string) {

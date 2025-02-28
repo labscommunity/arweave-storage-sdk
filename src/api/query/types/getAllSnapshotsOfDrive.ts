@@ -6,8 +6,8 @@ query($cursor: String $address: String! $driveId: String!) {
       tags: [
         { name: "Drive-Id", values: [$driveId] }
         { name: "Entity-Type", values: ["snapshot"] }
+        { name: "Owner", values: [$address] }
       ]
-      owners: [$address]
     ) {
       pageInfo {
         hasNextPage

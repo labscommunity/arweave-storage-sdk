@@ -4,11 +4,13 @@ import NewOptionsList from './NewOptionsList'
 import React from 'react'
 import NewFolderModal from './NewFolderModal'
 import FileFolderUploader from './FileFolderUploader'
+import UploadFile from './UploadFile'
 
 const SideNav = () => {
   const [isNewOptionsListOpen, setIsNewOptionsListOpen] = React.useState(false)
   const [isNewFolderModalOpen, setIsNewFolderModalOpen] = React.useState(false)
   const [isFileUploadModalOpen, setIsFileUploadModalOpen] = React.useState(false)
+  const [isUploadFileModalOpen, setIsUploadFileModalOpen] = React.useState(false)
   React.useEffect(() => {
     const handleClickOutside = (event) => {
       if (isNewOptionsListOpen && !event.target.closest('#contextMenu')) {
@@ -30,11 +32,11 @@ const SideNav = () => {
       <nav className="space-y-2">
         <div className="relative">
           <button
-            onClick={() => setIsNewOptionsListOpen(true)}
+            onClick={() => setIsUploadFileModalOpen(true)}
             className="flex items-center bg-[#0061FF] py-2 px-6 rounded-lg text-white mb-4"
           >
             <FaPlus className="w-4 h-4 mr-2" />
-            New
+            Upload File
           </button>
           {isNewOptionsListOpen && (
             <NewOptionsList
@@ -49,10 +51,15 @@ const SideNav = () => {
           Files
         </a>
         <a href="#" className="flex items-center text-gray-700 hover:bg-gray-100 py-2 px-4 rounded-lg">
+          <i className="bi bi-hdd mr-3"></i>
+          Drive
+        </a>
+        <a href="#" className="flex items-center text-gray-700 hover:bg-gray-100 py-2 px-4 rounded-lg">
           <i className="bi bi-clock-history mr-3"></i>
           Recents
         </a>
       </nav>
+      <UploadFile isOpen={isUploadFileModalOpen} setIsOpen={setIsUploadFileModalOpen} />
       <NewFolderModal isOpen={isNewFolderModalOpen} setIsOpen={setIsNewFolderModalOpen} />
       <FileFolderUploader isOpen={isFileUploadModalOpen} setIsOpen={setIsFileUploadModalOpen} />
     </div>

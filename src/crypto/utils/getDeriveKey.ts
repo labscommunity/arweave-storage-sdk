@@ -2,7 +2,7 @@ import { EntityKey } from '../EntityKey'
 
 export async function getDeriveKey(ikm: ArrayBuffer, option?: { salt?: Buffer; info?: Buffer }) {
   const { salt, info } = option || {}
-  
+
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
     ikm,

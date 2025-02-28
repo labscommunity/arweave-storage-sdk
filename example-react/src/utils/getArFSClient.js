@@ -1,7 +1,12 @@
-import { Capsule } from 'capsule-js'
+import { ArFSApi } from 'arweave-storage-sdk'
+import { useGlobalStore } from '../store/globalStore'
 
-export function getArFSClient() {
-  const arfsClient = new Capsule({ wallet: 'use_wallet', appName: 'arfs-js-drive' })
-
-  return arfsClient
+export async function getArFSClient() {
+  const { address } = useGlobalStore.getState().authState
+  if (!address) {
+    throw new Error('No address found')
+  }
+  
+  const arfs = new ArFSApi({ gateway: 'https://arweave.net', address, appName: 'arfs-example' })
+  return arfs
 }

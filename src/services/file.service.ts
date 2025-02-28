@@ -30,7 +30,7 @@ export class FileService {
       const localTags: Tag[] = []
 
       if (visibility === 'private') {
-        const { baseEntityKey } = await this.crypto.getDriveKey(rest.driveId)
+        const { baseEntityKey } = await this.crypto.getDriveKey(rest.driveId) as any
         const fileKey = await this.crypto.getFileKey(baseEntityKey, fileInstance.fileId)
 
         const encryptedFile = await this.crypto.encryptEntity(Buffer.from(file), fileKey)
@@ -71,7 +71,7 @@ export class FileService {
     let fileMetaData: string | ArrayBuffer = JSON.stringify(fileInstance.getMetaData())
 
     if (visibility === 'private') {
-      const { baseEntityKey } = await this.crypto.getDriveKey(rest.driveId)
+      const { baseEntityKey } = await this.crypto.getDriveKey(rest.driveId) as any
       const fileKey = await this.crypto.getFileKey(baseEntityKey, fileInstance.fileId)
 
       const encryptedFileMetaData = await this.crypto.encryptEntity(Buffer.from(fileMetaData), fileKey)
@@ -138,7 +138,7 @@ export class FileService {
 
       if (!cipherIV) throw new Error('CipherIV Missing. Failed to decrypt.')
 
-      const { baseEntityKey } = await this.crypto.getDriveKey(fileEntity.driveId)
+      const { baseEntityKey } = await this.crypto.getDriveKey(fileEntity.driveId) as any
       const fileKey = await this.crypto.getFileKey(baseEntityKey, fileEntity.fileId)
 
       const decryptedFileBuffer = await this.crypto.decryptEntity(fileKey, cipherIV, Buffer.from(dataArrayBuffer))
@@ -160,7 +160,7 @@ export class FileService {
       if (modelObject.cipher && modelObject.cipherIv) {
         const dataArrayBuffer = await txRes.arrayBuffer()
 
-        const { baseEntityKey } = await this.crypto.getDriveKey(modelObject.driveId)
+        const { baseEntityKey } = await this.crypto.getDriveKey(modelObject.driveId) as any
         const fileKey = await this.crypto.getFileKey(baseEntityKey, modelObject.fileId)
 
         const decryptedEntityDataBuffer = await this.crypto.decryptEntity(

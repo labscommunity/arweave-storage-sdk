@@ -28,7 +28,7 @@ export class DriveService {
     let rootFolderMetaData: string | ArrayBuffer = JSON.stringify(rootFolder.getMetaData())
 
     if (visibility === 'private') {
-      const { aesKey } = await this.crypto.getDriveKey(drive.driveId)
+      const { aesKey } = await this.crypto.getDriveKey(drive.driveId) as any
 
       const encryptedDriveMetaData = await this.crypto.encryptEntity(Buffer.from(driveMetaData), aesKey)
       const encryptedRootFolderMetaData = await this.crypto.encryptEntity(Buffer.from(rootFolderMetaData), aesKey)
@@ -123,7 +123,7 @@ export class DriveService {
       if (modelObject.drivePrivacy && modelObject.drivePrivacy === 'private') {
         const driveArrayBuffer = await txRes.arrayBuffer()
 
-        const { aesKey } = await this.crypto.getDriveKey(modelObject.driveId)
+        const { aesKey } = await this.crypto.getDriveKey(modelObject.driveId) as any
 
         const decryptedDriveBuffer = await this.crypto.decryptEntity(
           aesKey,

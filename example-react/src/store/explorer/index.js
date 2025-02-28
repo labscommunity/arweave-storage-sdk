@@ -177,6 +177,33 @@ const createExplorerSlice = (set, get) => ({
 
       await waitFor(500)
     },
+    uploadFile: async (file, storageClient) => {
+      const userAddress = get().authState.address
+
+      if (!userAddress) {
+        // TODO: use toast maybe?
+        return
+      }
+    
+      // const storageApi = await getStorageApi()
+
+      try {
+        const {success} = await storageClient.quickUpload(file,{
+          name: file.name,
+          size: file.size,
+          dataContentType: file.type,
+          tags: [{ name: 'Content-Type', value: file.type }],
+          tokenAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+        })
+
+       return success
+      } catch (error) {
+        console.log({ error })
+        // TODO: use toast maybe?
+      }
+
+      await waitFor(500)
+    },
     addToPathEntities: (entity) => {
       set((state) => {
         state.explorerState.pathEntities.push(entity)

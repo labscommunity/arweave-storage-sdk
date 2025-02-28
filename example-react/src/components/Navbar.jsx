@@ -1,26 +1,110 @@
 import { motion } from 'framer-motion'
-import useWallet from '../lib/wallet-provider/useWallet'
-import React, { useState } from 'react'
-import { FaUserCircle } from 'react-icons/fa'
-import { shortenAddress } from '../utils/shortenAddr'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { useBalance } from 'wagmi'
+import { useGlobalStore } from '../store/globalStore'
 
 export const Navbar = () => {
-  const { connected, reConnect, activeAddress } = useWallet()
-
-  React.useEffect(() => {
-    reConnect()
-  }, [])
+  const address = useGlobalStore((state) => state.authState.address)
+  const { data: balance } = useBalance({
+    address,
+    token: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+  })
 
   return (
-    <nav className="w-full h-fit bg-slate-950 p-4 flex justify-end gap-2">
+    <nav className="h-fit bg-none flex justify-end gap-2">
       <div className="pr-6 flex gap-6 items-center">
-        {!connected && <ConnectButton />}
-        {connected && (
-          <div className="flex items-center gap-2">
-            <UserButton />
-            <h1>{shortenAddress(activeAddress)}</h1>
+      <ConnectButton.Custom>
+      {({
+        account,
+        chain,
+        openAccountModal,
+        openChainModal,
+        openConnectModal,
+        authenticationStatus,
+        mounted,
+      }) => {
+
+        // Note: If your app doesn't use authentication, you
+        // can remove all 'authenticationStatus' checks
+        const ready = mounted && authenticationStatus !== 'loading';
+        const connected =
+          ready &&
+          account &&
+          chain &&
+          (!authenticationStatus ||
+            authenticationStatus === 'authenticated');
+
+        return (
+          <div
+            {...(!ready && {
+              'aria-hidden': true,
+              'style': {
+                opacity: 0,
+                pointerEvents: 'none',
+                userSelect: 'none',
+              },
+            })}
+          >
+            {(() => {
+              if (!connected) {
+                return (
+                  <button onClick={openConnectModal} type="button">
+                    Connect Wallet
+                  </button>
+                );
+              }
+
+              if (chain.unsupported) {
+                return (
+                  <button onClick={openChainModal} type="button">
+                    Wrong network
+                  </button>
+                );
+              }
+
+              return (
+                <div className='flex gap-2 bg-white shadow-md p-2 rounded-md hover:cursor-pointer' >
+                  <button
+                    onClick={openChainModal}
+                    style={{ display: 'flex', alignItems: 'center' }}
+                    type="button"
+                  >
+                    {chain.hasIcon && (
+                      <div
+                        style={{
+                          background: chain.iconBackground,
+                          width: 12,
+                          height: 12,
+                          borderRadius: 999,
+                          overflow: 'hidden',
+                          marginRight: 4,
+                        }}
+                      >
+                        {chain.iconUrl && (
+                          <img
+                            alt={chain.name ?? 'Chain icon'}
+                            src={chain.iconUrl}
+                            style={{ width: 12, height: 12 }}
+                          />
+                        )}
+                      </div>
+                    )}
+                    {chain.name}
+                  </button>
+
+                  <button onClick={openAccountModal} type="button">
+                    {account.displayName}
+                    {balance
+                      ? ` (${balance.formatted} ${balance.symbol})`
+                      : ''}
+                  </button>
+                </div>
+              );
+            })()}
           </div>
-        )}
+        );
+      }}
+    </ConnectButton.Custom>
       </div>
     </nav>
   )
@@ -37,46 +121,3 @@ export const NavLink = ({ children }) => {
   )
 }
 
-const ConnectButton = () => {
-  const { handleConnectionWithArConnect } = useWallet()
-
-  return (
-    <button
-      onClick={handleConnectionWithArConnect}
-      className={`
-          relative z-0 flex items-center gap-2 overflow-hidden whitespace-nowrap rounded-lg border-[1px] 
-          border-neutral-600 px-4 py-1.5 font-medium
-         text-neutral-300 transition-all duration-300
-         bg-slate-800
-          before:absolute before:inset-0
-          before:-z-10 before:translate-y-[200%]
-          before:scale-[2.5]
-          before:rounded-[100%] before:bg-indigo-600
-          before:transition-transform before:duration-1000
-          before:content-[""]
-  
-          hover:scale-105 hover:text-neutral-50
-          hover:before:translate-y-[0%]
-          active:scale-100`}
-    >
-      Connect
-    </button>
-  )
-}
-
-const UserButton = () => {
-  const [open, setOpen] = useState(false)
-
-  return (
-    <motion.button
-      className="text-xl bg-slate-800 hover:bg-slate-700 rounded-full transition-colors relative py-1.5"
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={() => setOpen(!open)}
-    >
-      <span className="block relative z-10">
-        <FaUserCircle className="w-6 h-6 hover:text-white" />
-      </span>
-    </motion.button>
-  )
-}

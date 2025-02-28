@@ -1,21 +1,47 @@
 import * as React from 'react'
-import { getArFSClient } from '../../utils/getArFSClient'
-import { useConnection } from '@arweave-wallet-kit/react'
-
+import { getStorageApi } from '../../utils/getStorageClient'
+import { useAccount } from 'wagmi'
+import { useGlobalStore } from '../../store/globalStore'
+import { ArFSApi } from 'arweave-storage-sdk'
 const ArFSContext = React.createContext()
 
 export function ArFSProvider({ children }) {
-  const [arfsClient, setArfsClient] = React.useState({})
-  const { connected } = useConnection()
+  const [storageClient, setStorageClient] = React.useState(null)
+  const [arfsClient, setArfsClient] = React.useState(null)
+  const [loginUser] = useGlobalStore((state) => [state.authActions.login])
+  const { isConnected } = useAccount()
 
   React.useEffect(() => {
-    if(connected){
-      const client = getArFSClient()
-      setArfsClient(client)
+    if(isConnected){
+     getStorage()
     }
-  }, [connected])
+  }, [isConnected])
 
-  return <ArFSContext.Provider value={{ arfsClient }}>{children}</ArFSContext.Provider>
+  React.useEffect(() => {
+    if (storageClient && isConnected) {
+      login()
+    }
+  }, [storageClient, isConnected])
+
+  async function getStorage() {
+    const client = await getStorageApi()
+    setStorageClient(client)
+  }
+
+  async function login() {
+    await storageClient.api.login()
+    const profile = await storageClient.api.getProfile()
+    loginUser({
+      isLoggedIn: true,
+      address: profile.walletAddress,
+      profile: profile
+    })
+
+    const arfs = new ArFSApi({ gateway: 'https://arweave.net', address: profile.walletAddress, appName: 'arfs-example' })
+    setArfsClient(arfs)
+  }
+console.log({storageClient, arfsClient})
+  return <ArFSContext.Provider value={{ storageClient, arfsClient }}>{children}</ArFSContext.Provider>
 }
 
 export function useArFS() {

@@ -1,4 +1,6 @@
-import { Capsule } from './capsule'
+import { StorageApi } from './sdk'
+import { Configuration } from './wallet/Configuration'
+import { ArFSApi } from './api'
 
-export { Capsule }
+export { StorageApi, Configuration, ArFSApi }
 export * from './types'

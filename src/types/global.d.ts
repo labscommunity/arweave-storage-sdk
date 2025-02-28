@@ -10,4 +10,6 @@ declare module 'isomorphic-textencoder' {
 declare module globalThis {
   // eslint-disable-next-line no-var
   var arweaveWallet: any
+  // eslint-disable-next-line no-var
+  var ethereum: any
 }

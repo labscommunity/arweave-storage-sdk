@@ -24,7 +24,7 @@ export class FolderService {
     let folderMetaData: string | ArrayBuffer = JSON.stringify(folder.getMetaData())
 
     if (visibility === 'private') {
-      const { aesKey } = await this.crypto.getDriveKey(driveId)
+      const { aesKey } = await this.crypto.getDriveKey(driveId) as any
 
       const encryptedFolderMetaData = await this.crypto.encryptEntity(Buffer.from(folderMetaData), aesKey)
       folderMetaData = encryptedFolderMetaData.data
@@ -112,7 +112,7 @@ export class FolderService {
       if (modelObject.cipher && modelObject.cipherIv) {
         const dataArrayBuffer = await txRes.arrayBuffer()
 
-        const { aesKey, baseEntityKey } = await this.crypto.getDriveKey(modelObject.driveId)
+        const { aesKey, baseEntityKey } = await this.crypto.getDriveKey(modelObject.driveId) as any
         let key = aesKey
 
         if (modelObject.entityType === 'file') {

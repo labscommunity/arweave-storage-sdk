@@ -1,7 +1,7 @@
 const initialAuthState = {
   isLoggedIn: false,
   address: null,
-  method: null
+  profile: null
 }
 
 const createAuthSlice = (set) => ({
@@ -12,10 +12,15 @@ const createAuthSlice = (set) => ({
         state.authState = value
       })
     },
+    setProfile: (value) =>
+      set((state) => {
+        state.authState.profile = value
+      }),
     logout: () =>
       set((state) => {
         state.authState = initialAuthState
       })
+    
   }
 })
 
