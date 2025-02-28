@@ -64,10 +64,7 @@ export class StorageApi {
     const response = await this.api.createUploadRequest(requestPayload)
 
     if (!response.success) {
-      return {
-        success: false,
-        data: null
-      }
+      return response
     }
 
     const { paymentDetails, uploadRequest } = response.data
@@ -78,8 +75,8 @@ export class StorageApi {
     const amount = paymentDetails[tokenLowercase].amount
     const amountBn = parseUnits(amount, 6)
     // const contractData = tokenContract.interface.encodeFunctionData('transfer', [paymentDetails.payAddress, amountBn])
-    const contractSigner = tokenContract.connect(signer) as any;
-    
+    const contractSigner = tokenContract.connect(signer) as any
+
     const tx = await contractSigner.transfer(paymentDetails.payAddress, amountBn)
 
     const receipt = await tx.wait()
@@ -87,7 +84,6 @@ export class StorageApi {
     if (!receipt || receipt.status !== 1) {
       throw new Error('Upload transaction failed')
     }
-    await new Promise(resolve => setTimeout(resolve, 5000))
 
     const uploadResponse = await this.api.uploadFile({
       transactionId: tx.hash,
@@ -97,7 +93,6 @@ export class StorageApi {
       tags: options.tags,
       requestId: uploadRequest.id
     })
-
 
     return uploadResponse
   }
