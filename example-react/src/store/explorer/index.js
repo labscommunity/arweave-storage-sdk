@@ -193,8 +193,7 @@ const createExplorerSlice = (set, get) => ({
           name: file.name,
           size: file.size,
           dataContentType: file.type,
-          tags: [{ name: 'Content-Type', value: file.type }],
-          tokenAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+          tags: [{ name: 'Content-Type', value: file.type }]
         })
 
        return success

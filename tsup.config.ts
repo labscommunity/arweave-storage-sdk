@@ -12,7 +12,7 @@ export const tsup: Options = {
   skipNodeModulesBundle: true,
   entryPoints: ['src/index.ts'],
   watch: env === 'development',
-  target: 'es2020',
+  target: 'es2015',
   outDir: 'dist',
   entry: ['src/**/*.ts', '!src/**/__tests__/**', '!src/**/*.test.*'], //include all files under src
   shims: true,

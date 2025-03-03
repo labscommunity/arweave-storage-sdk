@@ -11,3 +11,4 @@ export const TAG_NAMES_TO_KEYS = {
   'Cipher': 'cipher',
   'Cipher-IV': 'cipherIv'
 }
+export const AUTH_TOKEN_DB_PATH = '.arweave-storage-sdk-files'

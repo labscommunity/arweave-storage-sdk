@@ -11,7 +11,7 @@ export class StorageServiceApi {
 
   constructor(wallet: WalletService) {
     this.wallet = wallet
-    this.tokenStorage = new TokenStorage(wallet.config.wallet === 'use_web_wallet')
+    this.tokenStorage = new TokenStorage()
   }
 
   async login() {
@@ -48,7 +48,7 @@ export class StorageServiceApi {
 
     const nonceResponse = await axios.post(`${this.apiBaseUrl}/auth/nonce`, {
       walletAddress: this.wallet.address,
-      chainType: this.wallet.chainType
+      chainType: this.wallet.chainInfo.chainType
     })
 
     if (nonceResponse.status !== 201 || !nonceResponse?.data?.data) {
@@ -64,7 +64,7 @@ export class StorageServiceApi {
 
     const payload = {
       walletAddress: this.wallet.address,
-      chainType: this.wallet.chainType,
+      chainType: this.wallet.chainInfo.chainType,
       signedMessage: message,
       signature
     }

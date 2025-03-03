@@ -56,6 +56,7 @@
     "ethers": "^6.13.5",
     "gql-query-builder": "^3.8.0",
     "just-debounce-it": "^3.2.0",
+    "level": "^9.0.0",
     "uuid": "^9.0.0",
     "warp-arbundles": "^1.0.4",
     "warp-contracts-plugin-signature": "^1.0.20"

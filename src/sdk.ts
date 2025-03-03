@@ -8,10 +8,13 @@ import { Tag } from 'arweave/web/lib/transaction'
 import { Configuration } from './wallet/Configuration'
 import { WalletService } from './wallet/WalletService'
 import { StorageServiceApi } from './api'
-import { Contract, JsonRpcSigner, parseUnits } from 'ethers'
+import { PaymentService } from './services/payment.service'
+import { ChainType } from './types'
+import { EvmPaymentService } from './services/evm-payment.service'
 
 export class StorageApi {
   public api: StorageServiceApi
+  public paymentService: PaymentService
   // public crypto: Crypto
   // public drive: DriveService
   // public folder: FolderService
@@ -29,6 +32,10 @@ export class StorageApi {
     const wallet = new WalletService(config)
     this.wallet = wallet
     this.api = new StorageServiceApi(wallet)
+
+    if (wallet.chainInfo.chainType === ChainType.evm) {
+      this.paymentService = new EvmPaymentService(this.wallet)
+    }
     // this.api = new ArFSApi({ gateway, wallet, appName: this.appName })
     // this.crypto = new Crypto(this.api)
 
@@ -57,8 +64,8 @@ export class StorageApi {
       uploadType: 'SINGLE_FILE',
       totalChunks: 1,
       tokenTicker: this.config.token,
-      network: 'mainnet',
-      chainId: 8453
+      network: this.wallet.chainInfo.network,
+      chainId: this.wallet.chainInfo.chainId
     }
 
     const response = await this.api.createUploadRequest(requestPayload)
@@ -67,26 +74,18 @@ export class StorageApi {
       return response
     }
 
-    const { paymentDetails, uploadRequest } = response.data
-    const ERC20_ABI = ['function transfer(address recipient, uint256 amount) external returns (bool)']
-    const signer = this.wallet.signer as JsonRpcSigner
-    const tokenContract = new Contract(options.tokenAddress, ERC20_ABI, signer)
+    const { paymentDetails, uploadRequest, token } = response.data
     const tokenLowercase = this.config.token?.toLowerCase()
-    const amount = paymentDetails[tokenLowercase].amount
-    const amountBn = parseUnits(amount, 6)
-    // const contractData = tokenContract.interface.encodeFunctionData('transfer', [paymentDetails.payAddress, amountBn])
-    const contractSigner = tokenContract.connect(signer) as any
+    const amount = paymentDetails[tokenLowercase].amountInSubUnits
+    const amountBn = BigInt(amount)
 
-    const tx = await contractSigner.transfer(paymentDetails.payAddress, amountBn)
-
-    const receipt = await tx.wait()
-
-    if (!receipt || receipt.status !== 1) {
-      throw new Error('Upload transaction failed')
-    }
+    const paymentReceipt = await this.paymentService.executePayment({
+      amountInSubUnits: amount,
+      payAddress: paymentDetails.payAddress
+    }, token.address, amountBn)
 
     const uploadResponse = await this.api.uploadFile({
-      transactionId: tx.hash,
+      transactionId: paymentReceipt.hash,
       file: data,
       fileName: options.name,
       mimeType: options.dataContentType,
@@ -103,5 +102,4 @@ export interface QuickUploadOptions {
   dataContentType: string
   tags: Tag[]
   size: number
-  tokenAddress: string
 }
