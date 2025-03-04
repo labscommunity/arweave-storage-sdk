@@ -4,12 +4,12 @@
     "experimentalDecorators": true,
     "module": "commonjs",
     "declaration": true,
-    "outDir": "./lib",
+    "outDir": "./dist",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "allowJs": true,
     "moduleResolution": "Node"
   },
-  "exclude": ["node_modules", "**/__tests__/*", "src/__tests__/*"]
+  "exclude": ["node_modules", "dist", "**/__tests__/*", "src/__tests__/*"]
 }

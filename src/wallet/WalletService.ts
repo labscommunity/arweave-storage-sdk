@@ -1,6 +1,6 @@
 import { ChainInfo, NetworkChainMap } from '../utils/constants'
 import { Configuration } from './Configuration'
-import { Wallet, BrowserProvider, JsonRpcSigner } from 'ethers'
+import { Wallet, BrowserProvider, JsonRpcSigner, JsonRpcProvider } from 'ethers'
 
 export class WalletService {
   public address: string | null = null
@@ -19,7 +19,8 @@ export class WalletService {
       const provider = new BrowserProvider(window.ethereum)
       this.signer = await provider.getSigner()
     } else {
-      this.signer = new Wallet(this.config.wallet)
+      const provider = new JsonRpcProvider(this.chainInfo.rpcUrl, this.chainInfo.network)
+      this.signer = new Wallet(this.config.wallet, provider)
     }
 
     this.address = await this.signer.getAddress()

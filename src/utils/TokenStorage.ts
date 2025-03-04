@@ -1,5 +1,7 @@
 import { Level } from 'level'
 import { AUTH_TOKEN_DB_PATH } from '../constants'
+import { isServer } from './platform'
+import { importDynamic } from './importDynamic'
 
 /**
  * TokenStorage class provides secure storage for access and refresh tokens
@@ -9,23 +11,23 @@ export class TokenStorage {
   private readonly storagePrefix = 'arweave_storage_'
   private readonly accessTokenKey = `${this.storagePrefix}access_token`
   private readonly refreshTokenKey = `${this.storagePrefix}refresh_token`
+  private readonly addressKey = `${this.storagePrefix}address`
   private static db: Level | null = null
-  private readonly ready: Promise<void>
 
   constructor() {
-    this.ready = this.initialize()
+    this.initialize()
   }
 
-  private async initialize() {
+  private initialize() {
     if (!TokenStorage.db) {
-      if (typeof window === 'undefined') {
+      if (isServer()) {
         // Node.js environment
-        const { mkdirSync } = await import('fs')
-        const { join } = await import('path')
-        const { homedir } = await import('os')
+        const { mkdirSync } = importDynamic('fs')
+        const { join } = importDynamic('path')
+        const { homedir } = importDynamic('os')
         mkdirSync(join(homedir(), AUTH_TOKEN_DB_PATH), { recursive: true })
       }
-      TokenStorage.db = new Level(await TokenStorage.getDBPath())
+      TokenStorage.db = new Level(TokenStorage.getDBPath())
     }
   }
 
@@ -34,9 +36,6 @@ export class TokenStorage {
    */
   async setAccessToken(token: string): Promise<void> {
     try {
-      if (!TokenStorage.db) {
-        await this.ready
-      }
       await TokenStorage.db!.put(this.accessTokenKey, token)
     } catch (error) {
       console.error('Failed to store access token:', error)
@@ -49,13 +48,29 @@ export class TokenStorage {
    */
   async setRefreshToken(token: string): Promise<void> {
     try {
-      if (!TokenStorage.db) {
-        await this.ready
-      }
       await TokenStorage.db!.put(this.refreshTokenKey, token)
     } catch (error) {
       console.error('Failed to store refresh token:', error)
       throw new Error('Failed to store refresh token')
+    }
+  }
+
+  async setAddress(address: string): Promise<void> {
+    try {
+      await TokenStorage.db!.put(this.addressKey, address)
+    } catch (error) {
+      console.error('Failed to store address:', error)
+      throw new Error('Failed to store address')
+      }
+  }
+
+  async getAddress(): Promise<string | null> {
+    try {
+      const address = await TokenStorage.db!.get(this.addressKey)
+      return address
+    } catch (error) {
+      console.error('Failed to retrieve address:', error)
+      return null
     }
   }
 
@@ -64,9 +79,6 @@ export class TokenStorage {
    */
   async getAccessToken(): Promise<string | null> {
     try {
-      if (!TokenStorage.db) {
-        await this.ready
-      }
       const token = await TokenStorage.db!.get(this.accessTokenKey)
       return token
     } catch (error) {
@@ -83,9 +95,6 @@ export class TokenStorage {
    */
   async getRefreshToken(): Promise<string | null> {
     try {
-      if (!TokenStorage.db) {
-        await this.ready
-      }
       const token = await TokenStorage.db!.get(this.refreshTokenKey)
       return token
     } catch (error) {
@@ -102,9 +111,6 @@ export class TokenStorage {
    */
   async clearTokens(): Promise<void> {
     try {
-      if (!TokenStorage.db) {
-        await this.ready
-      }
       await TokenStorage.db!.batch([
         { type: 'del', key: this.accessTokenKey },
         { type: 'del', key: this.refreshTokenKey }
@@ -114,11 +120,11 @@ export class TokenStorage {
     }
   }
 
-  private static async getDBPath(): Promise<string> {
-    return typeof window === 'undefined'
-      ? (async () => {
-          const { join } = await import('path')
-          const { homedir } = await import('os')
+  private static getDBPath(): string {
+    return isServer()
+      ? (() => {
+          const { join } = importDynamic('path')
+          const { homedir } = importDynamic('os')
           return join(homedir(), AUTH_TOKEN_DB_PATH)
         })()
       : AUTH_TOKEN_DB_PATH

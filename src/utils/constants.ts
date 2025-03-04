@@ -26,13 +26,15 @@ export const NetworkChainMap: Record<Network, ChainInfo> = {
     chainId: 8453,
     chainName: 'Base Mainnet',
     chainType: ChainType.evm,
-    network: ChainNetwork.Mainnet
+    network: ChainNetwork.Mainnet,
+    rpcUrl: 'https://1rpc.io/base'
   },
   [Network.BASE_TESTNET]: {
     chainId: 84532,
     chainName: 'Base Testnet',
     chainType: ChainType.evm,
-    network: ChainNetwork.Testnet
+    network: ChainNetwork.Testnet,
+    rpcUrl: 'https://sepolia.base.org'
   }
 }
 
@@ -41,4 +43,8 @@ export interface ChainInfo {
   chainName: string
   chainType: ChainType
   network: ChainNetwork
+  rpcUrl: string
 }
+
+export const BYTES_IN_MB = 1000000
+export const DEFAULT_CHUNK_SIZE_IN_BYTES = 10 * BYTES_IN_MB

@@ -11,6 +11,11 @@ import { StorageServiceApi } from './api'
 import { PaymentService } from './services/payment.service'
 import { ChainType } from './types'
 import { EvmPaymentService } from './services/evm-payment.service'
+import { throwError } from './utils/errors/error-factory'
+import { FileSource } from './types/file'
+import { createFileLike } from './utils/createFileLike'
+import { getSDKTags, applyFileTags } from './utils/getSDKTags'
+import { DEFAULT_CHUNK_SIZE_IN_BYTES } from './utils/constants'
 
 export class StorageApi {
   public api: StorageServiceApi
@@ -48,7 +53,7 @@ export class StorageApi {
     return this.wallet.ready
   }
 
-  async quickUpload(data: File, options: QuickUploadOptions) {
+  async quickUpload(data: FileSource, options: QuickUploadOptions) {
     //
     if (!this.ready || !this.wallet.signer) {
       return {
@@ -56,42 +61,63 @@ export class StorageApi {
         data: null
       }
     }
+    const overridedName = options.overrideFileName ? options.name : undefined
+    const fileLike = await createFileLike(data, { ...options, name: overridedName, mimeType: options.dataContentType })
+    if (fileLike.size === 0) {
+      throwError(400, 'File size is 0')
+    }
 
+    const sdkTags = getSDKTags()
+
+    const tags = applyFileTags(fileLike, [...options.tags, ...sdkTags], this.wallet.address)
+
+    let uploadType = 'SINGLE_FILE'
+    let totalChunks = 1
+
+    if (fileLike.size > DEFAULT_CHUNK_SIZE_IN_BYTES) {
+      uploadType = 'MULTIPART_FILE'
+      totalChunks = Math.ceil(fileLike.size / DEFAULT_CHUNK_SIZE_IN_BYTES)
+    }
+    const fileBuffer = await fileLike.arrayBuffer()
+    console.log({
+      fileLikeSize: fileLike.size,
+      fileBufferSize: fileBuffer.byteLength,
+      fileLikeTotalChunks: totalChunks,
+      fileBufferSizeTotalChunks: Math.ceil(fileBuffer.byteLength / DEFAULT_CHUNK_SIZE_IN_BYTES)
+    })
     const requestPayload = {
       fileName: options.name,
       mimeType: options.dataContentType,
-      size: options.size,
-      uploadType: 'SINGLE_FILE',
-      totalChunks: 1,
+      size: fileLike.size,
+      uploadType,
+      totalChunks,
       tokenTicker: this.config.token,
       network: this.wallet.chainInfo.network,
-      chainId: this.wallet.chainInfo.chainId
+      chainId: this.wallet.chainInfo.chainId,
+      tags: JSON.stringify(tags)
     }
 
-    const response = await this.api.createUploadRequest(requestPayload)
+    const response = await this.api.upload.createUploadRequest(requestPayload)
 
-    if (!response.success) {
-      return response
+    if (!response) {
+      throwError(400, 'Failed to create upload request')
     }
 
-    const { paymentDetails, uploadRequest, token } = response.data
+    const { paymentDetails, uploadRequest, token } = response
     const tokenLowercase = this.config.token?.toLowerCase()
     const amount = paymentDetails[tokenLowercase].amountInSubUnits
     const amountBn = BigInt(amount)
 
-    const paymentReceipt = await this.paymentService.executePayment({
-      amountInSubUnits: amount,
-      payAddress: paymentDetails.payAddress
-    }, token.address, amountBn)
+    const paymentReceipt = await this.paymentService.executePayment(
+      {
+        amountInSubUnits: amount,
+        payAddress: paymentDetails.payAddress
+      },
+      token.address,
+      amountBn
+    )
 
-    const uploadResponse = await this.api.uploadFile({
-      transactionId: paymentReceipt.hash,
-      file: data,
-      fileName: options.name,
-      mimeType: options.dataContentType,
-      tags: options.tags,
-      requestId: uploadRequest.id
-    })
+    const uploadResponse = await this.api.upload.uploadFile(fileLike, uploadRequest.id, paymentReceipt.hash)
 
     return uploadResponse
   }
@@ -102,4 +128,5 @@ export interface QuickUploadOptions {
   dataContentType: string
   tags: Tag[]
   size: number
+  overrideFileName?: boolean
 }

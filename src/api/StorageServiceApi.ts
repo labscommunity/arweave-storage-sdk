@@ -3,59 +3,60 @@ import { STORAGE_SERVICE_API_URL } from '../utils/constants'
 import { WalletService } from '../wallet/WalletService'
 import { Tag } from 'arweave/web/lib/transaction'
 import { TokenStorage } from '../utils/TokenStorage'
+import { throwError } from '../utils/errors/error-factory'
+import { AuthClient } from './auth/AuthClient'
+import { UserClient } from './user/UserClient'
+import { ArweaveStorageSdkError } from '../utils/errors/base-error'
+import { UploadClient } from './upload/UploadClient'
 
 export class StorageServiceApi {
-  private readonly apiBaseUrl: string = STORAGE_SERVICE_API_URL
-  private tokenStorage: TokenStorage
   private wallet: WalletService
+  public auth: AuthClient
+  public user: UserClient
+  public upload: UploadClient
 
   constructor(wallet: WalletService) {
     this.wallet = wallet
-    this.tokenStorage = new TokenStorage()
+    this.auth = new AuthClient()
+    this.user = new UserClient()
+    this.upload = new UploadClient()
   }
 
   async login() {
     if (!this.wallet.ready) {
-      throw new Error('Wallet not ready')
+      await this.wallet.ready
     }
 
-    // Check for existing valid tokens
-    const accessToken = await this.tokenStorage.getAccessToken()
-    const refreshToken = await this.tokenStorage.getRefreshToken()
+    const hasActiveSession = await this.auth.hasActiveSession()
 
-    if (accessToken && refreshToken) {
+    if (hasActiveSession) {
+      const address = await this.auth.getAddress()
+      if (!address) {
+        this.auth.logout()
+        return
+      }
+
+      if (address !== this.wallet.address) {
+        this.auth.logout()
+        return
+      }
+
       try {
         // Verify if the access token is still valid by making a test request
-        const response = await axios.get(`${this.apiBaseUrl}/users/me`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`
-          }
-        })
-
-        if (response.status === 200) {
-          // Tokens are still valid, no need to login again
+        await this.user.getUser()
+        return
+      } catch (error) {
+        if (error.statusCode === 401) {
+          await this.auth.refreshAccessToken()
           return
         }
 
-        // If access token is expired, try to refresh
-        await this.refreshAccessToken()
-        return
-      } catch (error) {
         // Clear invalid tokens and proceed with new login
-        this.tokenStorage.clearTokens()
+        this.auth.logout()
       }
     }
 
-    const nonceResponse = await axios.post(`${this.apiBaseUrl}/auth/nonce`, {
-      walletAddress: this.wallet.address,
-      chainType: this.wallet.chainInfo.chainType
-    })
-
-    if (nonceResponse.status !== 201 || !nonceResponse?.data?.data) {
-      throw new Error('Failed to get nonce')
-    }
-
-    const nonce = nonceResponse?.data?.data
+    const nonce = await this.auth.generateNonce(this.wallet.address, this.wallet.chainInfo.chainType)
 
     const message = `
     Nonce: ${nonce}
@@ -69,128 +70,17 @@ export class StorageServiceApi {
       signature
     }
 
-    const verifyResponse = await axios.post(`${this.apiBaseUrl}/auth/verify`, payload)
-
-    if (verifyResponse.status !== 201 || !verifyResponse?.data?.data) {
-      throw new Error('Failed to verify')
-    }
-
-    await this.tokenStorage.setAccessToken(verifyResponse?.data?.data?.accessToken)
-    await this.tokenStorage.setRefreshToken(verifyResponse?.data?.data?.refreshToken)
+    await this.auth.verify(payload.walletAddress, payload.chainType, payload.signedMessage, payload.signature)
   }
 
   async refreshAccessToken() {
-    const accessToken = await this.tokenStorage.getAccessToken()
-    const refreshToken = await this.tokenStorage.getRefreshToken()
-    if (!refreshToken || !accessToken) {
-      throw new Error('Refresh token or access token not found')
-    }
-
-    const response = await axios.post(
-      `${this.apiBaseUrl}/auth/refresh`,
-      {
-        refreshToken
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }
-    )
-
-    if (response.status !== 201 || !response?.data?.data) {
-      throw new Error('Failed to refresh access token')
-    }
-
-    await this.tokenStorage.setAccessToken(response?.data?.data?.accessToken)
-    await this.tokenStorage.setRefreshToken(response?.data?.data?.refreshToken)
+    await this.auth.refreshAccessToken()
   }
 
-  async createUploadRequest(payload: CreateUploadRequestPayload) {
-    const accessToken = await this.getAccessToken()
+  async getUser() {
+    const user = await this.user.getUser()
 
-    const response = await axios.post(`${this.apiBaseUrl}/upload/create`, payload, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
-    })
-
-    if (response.status !== 201) {
-      return {
-        success: false,
-        error: JSON.stringify(response.data.message)
-      }
-    }
-    const data = response?.data?.data
-
-    return {
-      success: true,
-      data
-    }
-  }
-
-  async uploadFile(payload: UploadFilePayload) {
-    const accessToken = await this.getAccessToken()
-
-    const formData = new FormData()
-    for (const [key, value] of Object.entries(payload)) {
-      if (key === 'tags') {
-        formData.append(key, JSON.stringify(value))
-      } else {
-        formData.append(key, value)
-      }
-    }
-
-    const response = await axios.post(`${this.apiBaseUrl}/upload`, formData, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-
-    if (response.status !== 201) {
-      return {
-        success: false,
-        error: JSON.stringify(response.data.message)
-      }
-    }
-    const data = response?.data?.data
-
-    return {
-      success: true,
-      data
-    }
-  }
-
-  async getProfile() {
-    const accessToken = await this.getAccessToken()
-
-    const response = await axios.get(`${this.apiBaseUrl}/users/me`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
-    })
-
-    if (response.status !== 200) {
-      return {
-        success: false,
-        error: JSON.stringify(response.data.message)
-      }
-    }
-    const data = response?.data?.data
-    return {
-      success: true,
-      data
-    }
-  }
-
-  private async getAccessToken(): Promise<string> {
-    const token = await this.tokenStorage.getAccessToken()
-    if (!token) {
-      throw new Error('Access token not found')
-    }
-
-    return token
+    return user
   }
 }
 
@@ -202,6 +92,7 @@ export interface CreateUploadRequestPayload {
   tokenTicker: string
   network: string
   chainId: number
+  tags: Tag[]
 }
 
 export interface UploadFilePayload {

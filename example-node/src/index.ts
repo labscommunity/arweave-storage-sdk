@@ -16,7 +16,22 @@ async function main() {
 
   //Login
   await storageApiInstance.api.login()
-  const profile = await storageApiInstance.api.getProfile()
+
+  const tags = [
+    { name: 'Content-Type', value: 'text/plain' },
+    { name: 'Arweave-Transaction', value: 'test' }
+  ]
+  const file = new Blob(['Hello, world!'], { type: 'text/plain' })
+  const upload = await storageApiInstance.quickUpload(await file.arrayBuffer(), {
+    name: 'hello.txt',
+    dataContentType: 'text/plain',
+    tags,
+    size: file.size,
+    overrideFileName: true
+  } as any)
+  console.log(upload)
+
+  const profile = await storageApiInstance.api.getUser()
   console.log(profile)
 }
 

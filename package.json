@@ -1,7 +1,6 @@
 {
   "name": "arweave-storage-sdk",
   "version": "1.4.1",
-  "type": "module",
   "description": "ArFS based File System for web/backend",
   "files": [
     "dist/",
@@ -9,8 +8,8 @@
   ],
   "exports": {
     ".": {
-      "require": "./dist/index.cjs",
-      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
       "types": "./dist/index.d.ts"
     }
   },
@@ -50,6 +49,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "agentkeepalive": "^4.6.0",
     "ar-gql": "^1.2.9",
     "arweave": "^1.14.4",
     "axios": "^1.8.1",
@@ -57,8 +57,10 @@
     "gql-query-builder": "^3.8.0",
     "just-debounce-it": "^3.2.0",
     "level": "^9.0.0",
+    "mime-types": "^2.1.35",
     "uuid": "^9.0.0",
     "warp-arbundles": "^1.0.4",
-    "warp-contracts-plugin-signature": "^1.0.20"
+    "warp-contracts-plugin-signature": "^1.0.20",
+    "web-streams-polyfill": "^4.1.0"
   }
 }
