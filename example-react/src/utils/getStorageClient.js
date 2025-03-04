@@ -9,7 +9,7 @@ export async function getStorageApi() {
 
   const config = new Configuration({
     privateKey: 'use_web_wallet',
-    appName: 'arfs-js-drive', 
+    appName: 'arfs-js-drive',
     network: Network.BASE_MAINNET,
     token: Token.USDC
   })

@@ -20,10 +20,10 @@ const createAuthSlice = (set) => ({
       }),
     fetchProfile: async () => {
       const storageApi = await getStorageApi()
-      const profile = await storageApi.api.getProfile()
-      if(profile.success){
+      const profile = await storageApi.api.getUser()
+      if(profile){
         set((state) => {
-          state.authState.profile = profile.data
+          state.authState.profile = profile
         })
       }
     },

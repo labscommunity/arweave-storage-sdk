@@ -12,8 +12,8 @@ export default defineConfig({
         Buffer: true,
         process: true
       },
-      include: ['buffer', 'process'],
-      protocolImports: false
+      include: ['buffer', 'process', 'url'],
+      protocolImports: true
     })
   ]
 })
