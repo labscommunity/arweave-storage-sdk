@@ -1,17 +1,17 @@
-import { ArFSApi } from '../api'
 import { EntityKey } from './EntityKey'
-import { deriveFileKey } from './utils/keys'
+import { deriveDriveKey, deriveFileKey } from './utils/keys'
+import { ArweaveWallet } from '../wallet/ArweaveWallet'
 
 export class Crypto {
-  api: ArFSApi
+  arweaveWallet: ArweaveWallet
 
-  constructor(api: ArFSApi) {
-    this.api = api
+  constructor(arweaveWallet: ArweaveWallet) {
+    this.arweaveWallet = arweaveWallet
   }
 
   async encryptEntity(data: Buffer, key: CryptoKey) {
-    const iv = window.crypto.getRandomValues(new Uint8Array(12))
-    const encryptedEntityBuffer = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, data)
+    const iv = globalThis.crypto.getRandomValues(new Uint8Array(12))
+    const encryptedEntityBuffer = await globalThis.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, data)
 
     return {
       cipher: 'AES256-GCM',
@@ -23,14 +23,13 @@ export class Crypto {
   async decryptEntity(key: CryptoKey, iv: string, data: Buffer) {
     const cipherIV: Buffer = Buffer.from(iv, 'base64')
 
-    const decryptedEntity = await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv: cipherIV }, key, data)
+    const decryptedEntity = await globalThis.crypto.subtle.decrypt({ name: 'AES-GCM', iv: cipherIV }, key, data)
 
     return decryptedEntity
   }
 
   async getDriveKey(driveId: string) {
-    console.log({ driveId })
-    // return deriveDriveKey(this.api.wallet, driveId)
+    return deriveDriveKey(this.arweaveWallet.getPrivateKey(), driveId)
   }
 
   async getFileKey(driveKey: EntityKey, fileId: string) {

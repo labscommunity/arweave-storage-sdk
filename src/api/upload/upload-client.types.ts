@@ -106,3 +106,13 @@ export interface UploadChunkResponse {
   progress: number
   receipt?: any
 }
+
+export interface QuickUploadOptions {
+  name: string
+  dataContentType: string
+  tags: Tag[]
+  size: number
+  overrideFileName?: boolean
+}
+
+export type UploadDataItemOptions = Omit<QuickUploadOptions, 'tags' | 'size' | 'overrideFileName'>

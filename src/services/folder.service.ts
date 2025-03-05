@@ -7,24 +7,29 @@ import { EntityVisibility } from '../types'
 import { toModelObject } from '../utils/arweaveTagsUtils'
 import { getEntityTypeFromTags } from '../utils/getEntityTypeFromTags'
 import { getUniqueEntities } from '../utils/getUniqueEntities'
+import { ArweaveWallet } from '../wallet/ArweaveWallet'
+import { UploadClient } from '../api/upload/UploadClient'
+import { throwError } from '../utils/errors/error-factory'
 
 export class FolderService {
-  api: ArFSApi
+  arweaveWallet: ArweaveWallet
+  uploadClient: UploadClient
   crypto: Crypto
   tags: Tag[] = []
 
-  constructor(api: ArFSApi, tags: Tag[] = [], crypto: Crypto) {
-    this.api = api
-    this.tags = tags
+  constructor(arweaveWallet: ArweaveWallet, tags: Tag[] = [], crypto: Crypto, uploadClient: UploadClient) {
+    this.arweaveWallet = arweaveWallet
+    this.uploadClient = uploadClient
     this.crypto = crypto
+    this.tags = tags
   }
 
-  async create(name: string, { parentFolderId, driveId, visibility = 'public' }: CreateFolderOptions) {
+  async create(name: string, { parentFolderId, driveId, visibility = 'public', ...options }: CreateFolderOptions) {
     const folder = Folder.create({ name, driveId: driveId, parentFolderId, visibility })
     let folderMetaData: string | ArrayBuffer = JSON.stringify(folder.getMetaData())
 
     if (visibility === 'private') {
-      const { aesKey } = await this.crypto.getDriveKey(driveId) as any
+      const { aesKey } = (await this.crypto.getDriveKey(driveId)) as any
 
       const encryptedFolderMetaData = await this.crypto.encryptEntity(Buffer.from(folderMetaData), aesKey)
       folderMetaData = encryptedFolderMetaData.data
@@ -33,29 +38,34 @@ export class FolderService {
       folder.cipherIv = encryptedFolderMetaData.cipherIV
     }
 
-    const folderDataItem = await folder.toTransaction(this.tags, folderMetaData)
+    const tags = [...this.tags, ...(options?.tags || [])]
+    const folderDataItem = await folder.toDataItem(this.arweaveWallet.signer, tags, folderMetaData)
 
-    const response = await this.api.signAndSendAllTransactions([folderDataItem])
+    const folderTxId = await this.uploadClient.uploadDataItem(folderDataItem, {
+      name: `${folder.name}.json`,
+      dataContentType: folder.contentType
+    })
 
-    if (response.failedTxIndex.length !== 0) {
-      throw new Error('Failed to create a new folder.')
+    if (!folderTxId) {
+      throwError(400, 'Failed to create a new folder.')
     }
 
-    folder.setId(response.successTxIds[0])
+    folder.setId(folderTxId)
     return folder
   }
 
   async listAll(folderId: string, driveId: string) {
-    await this.api.ready
-
-    if (!this.api.ready || !this.api.queryEngine) {
+    if (!this.arweaveWallet.queryEngine) {
       return null
     }
 
     let response: (File | Folder)[] = []
 
     try {
-      const entitiesGql = await this.api.queryEngine.query('GET_ALL_ENTITIES_IN_FOLDER', { folderId, driveId })
+      const entitiesGql = await this.arweaveWallet.queryEngine.query('GET_ALL_ENTITIES_IN_FOLDER', {
+        folderId,
+        driveId
+      })
 
       for (const entityGql of entitiesGql) {
         const entityInstance = await this.#transactionToEntityInstance(entityGql.node.id, entityGql.node.tags as Tag[])
@@ -74,16 +84,14 @@ export class FolderService {
   }
 
   async get(folderId: string, driveId: string) {
-    await this.api.ready
-
-    if (!this.api.ready || !this.api.queryEngine) {
+    if (!this.arweaveWallet.queryEngine) {
       return null
     }
 
     let response: Folder | null = null
 
     try {
-      const entitiesGql = await this.api.queryEngine.query('GET_FOLDER_BY_ID', { folderId, driveId })
+      const entitiesGql = await this.arweaveWallet.queryEngine.query('GET_FOLDER_BY_ID', { folderId, driveId })
 
       if (!entitiesGql.length) {
         return null
@@ -96,7 +104,7 @@ export class FolderService {
 
       response = folderInstance as Folder
     } catch (error) {
-      throw new Error('Failed to get folder.')
+      throwError(400, 'Failed to get folder.')
     }
 
     return response
@@ -112,7 +120,7 @@ export class FolderService {
       if (modelObject.cipher && modelObject.cipherIv) {
         const dataArrayBuffer = await txRes.arrayBuffer()
 
-        const { aesKey, baseEntityKey } = await this.crypto.getDriveKey(modelObject.driveId) as any
+        const { aesKey, baseEntityKey } = (await this.crypto.getDriveKey(modelObject.driveId)) as any
         let key = aesKey
 
         if (modelObject.entityType === 'file') {
@@ -159,4 +167,5 @@ export type CreateFolderOptions = {
   parentFolderId: string
   driveId: string
   visibility?: EntityVisibility
+  tags?: Tag[]
 }

@@ -14,7 +14,7 @@ export async function deriveDriveKey(wallet: Wallet, driveId: string) {
 
   const baseEntityKey = await getDeriveKey(hash)
 
-  const cryptoKey = await window.crypto.subtle.deriveKey(
+  const cryptoKey = await globalThis.crypto.subtle.deriveKey(
     {
       name: 'HKDF',
       hash: 'SHA-256',
@@ -38,7 +38,7 @@ export async function deriveFileKey(driveEntityKey: EntityKey, fileId: string): 
   const driveEntityKeyBuffer = driveEntityKey.keyData.buffer.slice(info.byteOffset, info.byteOffset + info.byteLength)
   const baseEntityKey = await getDeriveKey(driveEntityKeyBuffer as ArrayBuffer, { info })
 
-  const cryptoKey = await window.crypto.subtle.deriveKey(
+  const cryptoKey = await globalThis.crypto.subtle.deriveKey(
     {
       name: 'HKDF',
       hash: 'SHA-256',

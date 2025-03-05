@@ -6,22 +6,146 @@ import {
   CreateUploadRequestResponse,
   GetEstimatesPayload,
   GetEstimatesResponse,
-  UploadChunkResponse
+  QuickUploadOptions,
+  UploadChunkResponse,
+  UploadDataItemOptions
 } from './upload-client.types'
-import { jsonToBase64 } from '../../utils/encoding'
 import { DEFAULT_CHUNK_SIZE_IN_BYTES } from '../../utils/constants'
-import { FileLike } from '../../types/file'
+import { FileLike, FileSource } from '../../types/file'
 import { ArweaveWallet } from '../../wallet/ArweaveWallet'
 import { Bundle, DataItem, bundleAndSignData, createData } from 'arbundles'
+import { EvmPaymentService } from '../../services/evm-payment.service'
+import { createFileLike } from '../../utils/createFileLike'
+import { applyFileTags, getSDKTags } from '../../utils/getSDKTags'
+import { WalletService } from '../../wallet/WalletService'
 
 export class UploadClient extends BackendClient {
   private arweaveWallet: ArweaveWallet | null = null
-  constructor() {
+  private payment: EvmPaymentService
+  private wallet: WalletService
+
+  constructor(payment: EvmPaymentService, wallet: WalletService) {
     super()
+    this.payment = payment
+    this.wallet = wallet
   }
 
-  setArweaveWallet(wallet: ArweaveWallet) {
-    this.arweaveWallet = wallet
+  setArweaveWallet(arweaveWallet: ArweaveWallet) {
+    this.arweaveWallet = arweaveWallet
+  }
+
+  async quickUpload(data: FileSource, options: QuickUploadOptions) {
+    await this.getAccessToken()
+
+    const overridedName = options.overrideFileName ? options.name : undefined
+    const fileLike = await createFileLike(data, { ...options, name: overridedName, mimeType: options.dataContentType })
+
+    if (fileLike.size === 0) {
+      throwError(400, 'File size is 0')
+    }
+
+    const sdkTags = getSDKTags()
+    const tags = applyFileTags(fileLike, [...options.tags, ...sdkTags], this.wallet.address)
+
+    let uploadType = 'SINGLE_FILE'
+    let totalChunks = 1
+
+    if (fileLike.size > DEFAULT_CHUNK_SIZE_IN_BYTES) {
+      uploadType = 'MULTIPART_FILE'
+      totalChunks = Math.ceil(fileLike.size / DEFAULT_CHUNK_SIZE_IN_BYTES)
+    }
+
+    const requestPayload = {
+      fileName: options.name,
+      mimeType: options.dataContentType,
+      size: fileLike.size,
+      uploadType,
+      totalChunks,
+      tokenTicker: this.wallet.config.token,
+      network: this.wallet.chainInfo.network,
+      chainId: this.wallet.chainInfo.chainId,
+      tags: JSON.stringify(tags)
+    }
+
+    const response = await this.createUploadRequest(requestPayload)
+
+    if (!response) {
+      throwError(400, 'Failed to create upload request')
+    }
+
+    const { paymentDetails, uploadRequest, token } = response
+    const tokenLowercase = this.wallet.config.token.toLowerCase()
+    const amount = paymentDetails[tokenLowercase].amountInSubUnits
+    const amountBn = BigInt(amount)
+
+    const paymentReceipt = await this.payment.executePayment(
+      {
+        amountInSubUnits: amount,
+        payAddress: paymentDetails.payAddress
+      },
+      token.address,
+      amountBn
+    )
+
+    const uploadResponse = await this.uploadFile(fileLike, tags, uploadRequest.id, paymentReceipt.hash)
+
+    return uploadResponse
+  }
+
+  async uploadDataItem(dataItem: DataItem, options: UploadDataItemOptions) {
+    await this.getAccessToken()
+
+    if (!dataItem.tags.find((tag) => tag.name === 'Owner')) {
+      dataItem.tags.push({ name: 'Owner', value: this.wallet.address })
+    }
+
+    const dataBuffer = dataItem.getRaw()
+    const size = dataBuffer.byteLength
+
+    let uploadType = 'SINGLE_FILE'
+    let totalChunks = 1
+    if (size > DEFAULT_CHUNK_SIZE_IN_BYTES) {
+      uploadType = 'MULTIPART_FILE'
+      totalChunks = Math.ceil(size / DEFAULT_CHUNK_SIZE_IN_BYTES)
+    }
+
+    const requestPayload = {
+      fileName: options.name,
+      mimeType: options.dataContentType,
+      size,
+      uploadType,
+      totalChunks,
+      tokenTicker: this.wallet.config.token,
+      network: this.wallet.chainInfo.network,
+      chainId: this.wallet.chainInfo.chainId,
+      tags: JSON.stringify(dataItem.tags)
+    }
+
+    const response = await this.createUploadRequest(requestPayload)
+
+    if (!response) {
+      throwError(400, 'Failed to create upload request')
+    }
+
+    const { paymentDetails, uploadRequest, token } = response
+    const tokenLowercase = this.wallet.config.token.toLowerCase()
+    const amount = paymentDetails[tokenLowercase].amountInSubUnits
+    const amountBn = BigInt(amount)
+
+    const paymentReceipt = await this.payment.executePayment(
+      {
+        amountInSubUnits: amount,
+        payAddress: paymentDetails.payAddress
+      },
+      token.address,
+      amountBn
+    )
+
+    const bundle = await bundleAndSignData([dataItem], this.arweaveWallet.signer)
+
+    await this.uploadChunk(bundle, uploadRequest.id, paymentReceipt.hash)
+
+    return dataItem.id
   }
 
   async createUploadRequest(payload: CreateUploadRequestPayload): Promise<CreateUploadRequestResponse> {

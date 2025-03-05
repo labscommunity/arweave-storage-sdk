@@ -11,10 +11,11 @@ export function getSDKTags() {
 export function applyFileTags(file: FileLike, tags: Tag[], address: string) {
   const updatedTags: Tag[] = [
     ...tags,
-    { name: 'Owner', value: address },
     { name: 'File-Name', value: file.name },
     { name: 'Upload-Method', value: 'Quick-Upload' }
   ] as Tag[]
+
+
 
   if (!updatedTags.find((tag) => tag.name === 'Content-Type')) {
     updatedTags.push({ name: 'Content-Type', value: file.type } as Tag)

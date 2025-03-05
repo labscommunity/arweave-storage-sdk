@@ -1,12 +1,13 @@
 import { Tag } from 'arweave/web/lib/transaction'
 import { v4 as uuidv4 } from 'uuid'
-import { createData } from 'warp-arbundles'
+import { ArweaveSigner, createData } from 'arbundles'
 
 import { EntityVisibility } from '../types'
 import { arweaveInstance } from '../utils/arweaveInstance'
 import { toArweaveTags } from '../utils/arweaveTagsUtils'
 import { getUnixTime, UnixTime } from '../utils/UnixTime'
 import { BaseModel, BaseModelProps } from './Base.model'
+import { getSDKTags } from '../utils/getSDKTags'
 
 export interface DriveOptions extends BaseModelProps {
   drivePrivacy?: EntityVisibility
@@ -88,10 +89,18 @@ export class Drive extends BaseModel {
     return tx
   }
 
-  async toDataItem(signer: any) {
+  async toDataItem(signer: ArweaveSigner, customTags: Tag[] = [], data?: string | ArrayBuffer | Uint8Array) {
     const tags = this.toArweaveTags() as Tag[]
+    const sdkTags = getSDKTags()
+    const finalTags = [...tags, ...sdkTags, ...customTags]
 
-    return createData(JSON.stringify({ name: this.name, rootFolderId: this.rootFolderId }), signer, { tags })
+    if (data instanceof ArrayBuffer) {
+      return createData(new Uint8Array(data), signer, { tags: finalTags })
+    }
+
+    const metadata = JSON.stringify(this.getMetaData())
+
+    return createData(data || metadata, signer, { tags: finalTags })
   }
 
   toArweaveTags() {

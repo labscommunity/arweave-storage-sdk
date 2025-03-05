@@ -1,26 +1,43 @@
-import axios from 'axios'
-import { STORAGE_SERVICE_API_URL } from '../utils/constants'
 import { WalletService } from '../wallet/WalletService'
 import { Tag } from 'arweave/web/lib/transaction'
-import { TokenStorage } from '../utils/TokenStorage'
-import { throwError } from '../utils/errors/error-factory'
 import { AuthClient } from './auth/AuthClient'
 import { UserClient } from './user/UserClient'
 import { UploadClient } from './upload/UploadClient'
 import { ArweaveWallet } from '../wallet/ArweaveWallet'
+import { DriveService } from '../services/drive.service'
+import { FolderService } from '../services/folder.service'
+import { FileService } from '../services/file.service'
+import { Crypto } from '../crypto'
+import { EvmPaymentService } from '../services/evm-payment.service'
 
 export class StorageServiceApi {
-  private wallet: WalletService
   public auth: AuthClient
   public user: UserClient
   public upload: UploadClient
+
+  private wallet: WalletService
   private arweaveWallet: ArweaveWallet | null = null
 
-  constructor(wallet: WalletService) {
+  public crypto: Crypto | null = null
+  public drive: DriveService | null = null
+  public folder: FolderService | null = null
+  public file: FileService | null = null
+  public payment: EvmPaymentService
+
+  baseTags: Tag[] = []
+
+  constructor(wallet: WalletService, baseTags: Tag[]) {
     this.wallet = wallet
     this.auth = new AuthClient()
     this.user = new UserClient()
-    this.upload = new UploadClient()
+    this.upload = new UploadClient(this.payment, this.wallet)
+    this.payment = new EvmPaymentService(wallet) // TODO: after adding more chains, remove this
+
+    this.baseTags = baseTags
+
+    // if (wallet.chainInfo.chainType === ChainType.evm) {
+    //   this.payment = new EvmPaymentService(wallet)
+    // }
   }
 
   async login() {
@@ -89,8 +106,13 @@ export class StorageServiceApi {
   private async initializeArweaveWallet() {
     const arKeys = await this.user.getUserArweaveWallet()
 
-    this.arweaveWallet = new ArweaveWallet(arKeys.jwk, arKeys.address, arKeys.publicKey)
+    this.arweaveWallet = new ArweaveWallet(arKeys.jwk, arKeys.address, arKeys.publicKey, this.wallet.config.appName)
     this.upload.setArweaveWallet(this.arweaveWallet)
+
+    this.crypto = new Crypto(this.arweaveWallet)
+    this.drive = new DriveService(this.arweaveWallet, this.baseTags, this.crypto, this.upload)
+    this.folder = new FolderService(this.arweaveWallet, this.baseTags, this.crypto, this.upload)
+    this.file = new FileService(this.arweaveWallet, this.baseTags, this.crypto, this.upload)
   }
 }
 

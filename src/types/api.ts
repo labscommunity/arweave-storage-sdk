@@ -5,4 +5,4 @@ export type APIOptions = {
   appName?: string | null
   address: string
 }
-export type Wallet = JWKInterface | 'use_wallet'
+export type Wallet = JWKInterface

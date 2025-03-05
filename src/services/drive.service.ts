@@ -1,20 +1,24 @@
 import { Tag } from 'arweave/web/lib/transaction'
 
-import { ArFSApi } from '../api'
 import { Crypto } from '../crypto'
 import { Drive, DriveMetaData, DriveOptions, Folder } from '../models'
 import { CreateDriveOptions } from '../types/service'
 import { toModelObject } from '../utils/arweaveTagsUtils'
+import { ArweaveWallet } from '../wallet/ArweaveWallet'
+import { UploadClient } from '../api/upload/UploadClient'
+import { throwError } from '../utils/errors/error-factory'
 
 export class DriveService {
-  api: ArFSApi
+  arweaveWallet: ArweaveWallet
   crypto: Crypto
   tags: Tag[] = []
+  uploadClient: UploadClient
 
-  constructor(api: ArFSApi, tags: Tag[] = [], crypto: Crypto) {
-    this.api = api
+  constructor(arweaveWallet: ArweaveWallet, tags: Tag[] = [], crypto: Crypto, uploadClient: UploadClient) {
+    this.arweaveWallet = arweaveWallet
     this.tags = tags
     this.crypto = crypto
+    this.uploadClient = uploadClient
   }
 
   async create(name: string, options?: CreateDriveOptions) {
@@ -28,7 +32,7 @@ export class DriveService {
     let rootFolderMetaData: string | ArrayBuffer = JSON.stringify(rootFolder.getMetaData())
 
     if (visibility === 'private') {
-      const { aesKey } = await this.crypto.getDriveKey(drive.driveId) as any
+      const { aesKey } = (await this.crypto.getDriveKey(drive.driveId)) as any
 
       const encryptedDriveMetaData = await this.crypto.encryptEntity(Buffer.from(driveMetaData), aesKey)
       const encryptedRootFolderMetaData = await this.crypto.encryptEntity(Buffer.from(rootFolderMetaData), aesKey)
@@ -43,31 +47,41 @@ export class DriveService {
       rootFolder.cipherIv = encryptedRootFolderMetaData.cipherIV
     }
 
-    const driveDataItem = await drive.toTransaction(this.tags, driveMetaData)
-    const rootFolderDataItem = await rootFolder.toTransaction(this.tags, rootFolderMetaData)
+    const tags = [...this.tags, ...(options?.tags || [])]
+    const driveDataItem = await drive.toDataItem(this.arweaveWallet.signer, tags, driveMetaData)
+    const rootFolderDataItem = await rootFolder.toDataItem(this.arweaveWallet.signer, tags, rootFolderMetaData)
 
-    const response = await this.api.signAndSendAllTransactions([driveDataItem, rootFolderDataItem])
+    const driveTxId = await this.uploadClient.uploadDataItem(driveDataItem, {
+      name: `${drive.name}.json`,
+      dataContentType: drive.contentType
+    })
 
-    if (response.failedTxIndex.length !== 0) {
-      throw new Error('Failed to create a new drive.')
+    if (!driveTxId) {
+      throwError(400, 'Failed to create drive.')
     }
 
-    drive.setId(response.successTxIds[0])
+    const rootFolderTxId = await this.uploadClient.uploadDataItem(rootFolderDataItem, {
+      name: `${rootFolder.name}.json`,
+      dataContentType: rootFolder.contentType
+    })
 
+    if (!rootFolderTxId) {
+      throwError(400, 'Failed to create root folder.')
+    }
+
+    drive.setId(driveTxId)
     return drive
   }
 
   async listAll() {
-    await this.api.ready
-
-    if (!this.api.ready || !this.api.queryEngine) {
+    if (!this.arweaveWallet.queryEngine) {
       return null
     }
 
     let response: Drive[] = []
 
     try {
-      const drivesGql = await this.api.queryEngine.query('GET_ALL_USER_DRIVES')
+      const drivesGql = await this.arweaveWallet.queryEngine.query('GET_ALL_USER_DRIVES')
 
       for (const driveGql of drivesGql) {
         const driveInstance = await this.#transactionToDriveInstance(driveGql.node.id, driveGql.node.tags as Tag[])
@@ -84,16 +98,14 @@ export class DriveService {
   }
 
   async get(driveId: string) {
-    await this.api.ready
-
-    if (!this.api.ready || !this.api.queryEngine) {
+    if (!this.arweaveWallet.queryEngine) {
       return null
     }
 
     let response: Drive | null = null
 
     try {
-      const entitiesGql = await this.api.queryEngine.query('GET_USER_DRIVE_BY_ID', { driveId })
+      const entitiesGql = await this.arweaveWallet.queryEngine.query('GET_USER_DRIVE_BY_ID', { driveId })
 
       if (!entitiesGql.length) {
         return null
@@ -123,7 +135,7 @@ export class DriveService {
       if (modelObject.drivePrivacy && modelObject.drivePrivacy === 'private') {
         const driveArrayBuffer = await txRes.arrayBuffer()
 
-        const { aesKey } = await this.crypto.getDriveKey(modelObject.driveId) as any
+        const { aesKey } = (await this.crypto.getDriveKey(modelObject.driveId)) as any
 
         const decryptedDriveBuffer = await this.crypto.decryptEntity(
           aesKey,

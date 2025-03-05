@@ -3,7 +3,7 @@ import { EntityKey } from '../EntityKey'
 export async function getDeriveKey(ikm: ArrayBuffer, option?: { salt?: Buffer; info?: Buffer }) {
   const { salt, info } = option || {}
 
-  const cryptoKey = await crypto.subtle.importKey(
+  const cryptoKey = await globalThis.crypto.subtle.importKey(
     'raw',
     ikm,
     {
@@ -14,7 +14,7 @@ export async function getDeriveKey(ikm: ArrayBuffer, option?: { salt?: Buffer; i
     ['deriveBits', 'deriveKey']
   )
 
-  const keyData = await crypto.subtle.deriveBits(
+  const keyData = await globalThis.crypto.subtle.deriveBits(
     {
       name: 'HKDF',
       hash: 'SHA-256',
