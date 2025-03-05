@@ -1,4 +1,5 @@
 import { StorageApi, Configuration, Network, Token } from 'arweave-storage-sdk'
+import { Tag } from 'arweave/node/lib/transaction'
 import * as dotenv from 'dotenv'
 
 // Load environment variables from .env file
@@ -6,7 +7,7 @@ dotenv.config()
 
 async function main() {
   const config = new Configuration({
-    privateKey: process.env.PRIVATE_KEY || 'use_web_wallet',
+    privateKey: process.env.PRIVATE_KEY,
     appName: 'arfs-js-drive',
     network: Network.BASE_MAINNET,
     token: Token.USDC
@@ -20,16 +21,16 @@ async function main() {
   const tags = [
     { name: 'Content-Type', value: 'text/plain' },
     { name: 'Arweave-Transaction', value: 'test' }
-  ]
+  ] as Tag[]
+
   const file = new Blob(['Hello, world!'], { type: 'text/plain' })
   const upload = await storageApiInstance.quickUpload(await file.arrayBuffer(), {
-    name: 'hello.txt',
+    name: 'newtest.txt',
     dataContentType: 'text/plain',
     tags,
     size: file.size,
     overrideFileName: true
-  } as any)
-  console.log(upload)
+  })
 
   const profile = await storageApiInstance.api.getUser()
   console.log(profile)

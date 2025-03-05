@@ -6,14 +6,15 @@ import { TokenStorage } from '../utils/TokenStorage'
 import { throwError } from '../utils/errors/error-factory'
 import { AuthClient } from './auth/AuthClient'
 import { UserClient } from './user/UserClient'
-import { ArweaveStorageSdkError } from '../utils/errors/base-error'
 import { UploadClient } from './upload/UploadClient'
+import { ArweaveWallet } from '../wallet/ArweaveWallet'
 
 export class StorageServiceApi {
   private wallet: WalletService
   public auth: AuthClient
   public user: UserClient
   public upload: UploadClient
+  private arweaveWallet: ArweaveWallet | null = null
 
   constructor(wallet: WalletService) {
     this.wallet = wallet
@@ -43,7 +44,7 @@ export class StorageServiceApi {
 
       try {
         // Verify if the access token is still valid by making a test request
-        await this.user.getUser()
+        await this.initializeArweaveWallet()
         return
       } catch (error) {
         if (error.statusCode === 401) {
@@ -71,6 +72,8 @@ export class StorageServiceApi {
     }
 
     await this.auth.verify(payload.walletAddress, payload.chainType, payload.signedMessage, payload.signature)
+
+    await this.initializeArweaveWallet()
   }
 
   async refreshAccessToken() {
@@ -81,6 +84,13 @@ export class StorageServiceApi {
     const user = await this.user.getUser()
 
     return user
+  }
+
+  private async initializeArweaveWallet() {
+    const arKeys = await this.user.getUserArweaveWallet()
+
+    this.arweaveWallet = new ArweaveWallet(arKeys.jwk, arKeys.address, arKeys.publicKey)
+    this.upload.setArweaveWallet(this.arweaveWallet)
   }
 }
 

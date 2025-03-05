@@ -19,7 +19,7 @@ export class WalletService {
       const provider = new BrowserProvider(window.ethereum)
       this.signer = await provider.getSigner()
     } else {
-      const provider = new JsonRpcProvider(this.chainInfo.rpcUrl, this.chainInfo.network)
+      const provider = new JsonRpcProvider(this.chainInfo.rpcUrl)
       this.signer = new Wallet(this.config.wallet, provider)
     }
 

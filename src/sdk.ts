@@ -69,7 +69,7 @@ export class StorageApi {
 
     const sdkTags = getSDKTags()
 
-    const tags = applyFileTags(fileLike, [...options.tags, ...sdkTags], this.wallet.address)
+    const tags = applyFileTags(fileLike, [...options.tags, ...sdkTags, ...this.baseTags], this.wallet.address)
 
     let uploadType = 'SINGLE_FILE'
     let totalChunks = 1
@@ -78,13 +78,7 @@ export class StorageApi {
       uploadType = 'MULTIPART_FILE'
       totalChunks = Math.ceil(fileLike.size / DEFAULT_CHUNK_SIZE_IN_BYTES)
     }
-    const fileBuffer = await fileLike.arrayBuffer()
-    console.log({
-      fileLikeSize: fileLike.size,
-      fileBufferSize: fileBuffer.byteLength,
-      fileLikeTotalChunks: totalChunks,
-      fileBufferSizeTotalChunks: Math.ceil(fileBuffer.byteLength / DEFAULT_CHUNK_SIZE_IN_BYTES)
-    })
+
     const requestPayload = {
       fileName: options.name,
       mimeType: options.dataContentType,
@@ -117,9 +111,21 @@ export class StorageApi {
       amountBn
     )
 
-    const uploadResponse = await this.api.upload.uploadFile(fileLike, uploadRequest.id, paymentReceipt.hash)
+    const uploadResponse = await this.api.upload.uploadFile(fileLike, tags, uploadRequest.id, paymentReceipt.hash)
 
     return uploadResponse
+  }
+
+  async getEstimates(size: number) {
+    const response = await this.api.upload.getEstimates({
+      size,
+      chainId: this.wallet.chainInfo.chainId,
+      chainType: this.wallet.chainInfo.chainType,
+      network: this.wallet.chainInfo.network,
+      tokenTicker: this.config.token
+    })
+
+    return response
   }
 }
 

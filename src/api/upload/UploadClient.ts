@@ -11,10 +11,17 @@ import {
 import { jsonToBase64 } from '../../utils/encoding'
 import { DEFAULT_CHUNK_SIZE_IN_BYTES } from '../../utils/constants'
 import { FileLike } from '../../types/file'
+import { ArweaveWallet } from '../../wallet/ArweaveWallet'
+import { Bundle, DataItem, bundleAndSignData, createData } from 'arbundles'
 
 export class UploadClient extends BackendClient {
+  private arweaveWallet: ArweaveWallet | null = null
   constructor() {
     super()
+  }
+
+  setArweaveWallet(wallet: ArweaveWallet) {
+    this.arweaveWallet = wallet
   }
 
   async createUploadRequest(payload: CreateUploadRequestPayload): Promise<CreateUploadRequestResponse> {
@@ -49,18 +56,31 @@ export class UploadClient extends BackendClient {
     return response.data.data
   }
 
-  async uploadFile(data: FileLike, uploadId: string, txId: string) {
-    return this.uploadChunk(data, data.size, uploadId, txId)
+  // expects DataItem unsigned
+  async uploadFile(data: FileLike, tags: Tag[], uploadId: string, txId: string) {
+    if (!this.arweaveWallet) {
+      throwError(500, 'Arweave wallet not initialized')
+    }
+
+    const fileBuffer = await data.arrayBuffer()
+    const dataItem = createData(new Uint8Array(fileBuffer), this.arweaveWallet.signer, { tags })
+    const bundle = await bundleAndSignData([dataItem], this.arweaveWallet.signer)
+
+    return this.uploadChunk(bundle, uploadId, txId)
   }
 
-  private async uploadChunk(data: FileLike, fileSize: number, uploadId: string, txId: string) {
+  private async uploadChunk(data: Bundle, uploadId: string, txId: string) {
     const accessToken = await this.getAccessToken()
+
+    const arrayBuffer = data.getRaw()
+    const size = arrayBuffer.byteLength
+
     const chunkSize = DEFAULT_CHUNK_SIZE_IN_BYTES
-    const totalChunks = Math.ceil(fileSize / chunkSize)
-    const arrayBuffer = await data.arrayBuffer()
+    const totalChunks = Math.ceil(size / chunkSize)
+
     for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
       const start = chunkIndex * chunkSize
-      const end = Math.min(arrayBuffer.byteLength, start + chunkSize)
+      const end = Math.min(size, start + chunkSize)
       // ArrayBuffer.slice() returns a new ArrayBuffer containing the extracted portion.
       const chunk = arrayBuffer.slice(start, end)
 

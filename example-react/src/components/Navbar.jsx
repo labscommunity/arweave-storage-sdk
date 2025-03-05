@@ -48,7 +48,7 @@ export const Navbar = () => {
             {(() => {
               if (!connected) {
                 return (
-                  <button onClick={openConnectModal} type="button">
+                  <button className='bg-white shadow-md p-2 rounded-md hover:cursor-pointer' onClick={openConnectModal} type="button">
                     Connect Wallet
                   </button>
                 );

@@ -1,5 +1,5 @@
 import { Tag } from 'arweave/web/lib/transaction'
-import { ChainNetwork, ChainType } from '../../types'
+import { ChainNetwork, ChainType, Token as TokenType } from '../../types'
 
 export interface CreateUploadRequestPayload {
   fileName: string
@@ -21,7 +21,7 @@ export interface UploadFilePayload {
 
 export interface GetEstimatesPayload {
   size: number
-  tokenTicker: Token
+  tokenTicker: TokenType
   network: ChainNetwork
   chainId: number
   chainType: ChainType

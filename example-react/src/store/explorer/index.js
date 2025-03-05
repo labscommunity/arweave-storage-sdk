@@ -204,6 +204,11 @@ const createExplorerSlice = (set, get) => ({
 
       await waitFor(500)
     },
+    getEstimates: async (size) => {
+      const storageApi = await getStorageApi()
+      const response = await storageApi.getEstimates(size)
+      return response
+    },
     addToPathEntities: (entity) => {
       set((state) => {
         state.explorerState.pathEntities.push(entity)
