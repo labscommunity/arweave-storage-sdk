@@ -30,9 +30,9 @@ const ArFSActionsDropDown = () => {
     <motion.div animate={openDropDown ? 'open' : 'closed'} className="relative">
       <button
         onClick={() => setOpenDropDown((pv) => !pv)}
-        className="flex items-center gap-2 px-3 py-2 rounded-md text-indigo-50 bg-indigo-500 hover:bg-indigo-500 transition-colors"
+        className="flex items-center gap-2 px-3 py-2 rounded-md text-indigo-50 bg-[#0061FF] hover:bg-[#0061FF] transition-colors"
       >
-        <span className="font-medium text-sm">ArFS Actions</span>
+        <span className="font-medium text-sm">Create New</span>
         <motion.span variants={iconVariants}>
           <FiChevronDown />
         </motion.span>

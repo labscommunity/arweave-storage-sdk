@@ -1,4 +1,3 @@
-import { getArFSClient } from '../../utils/getArFSClient'
 import { getStorageApi } from '../../utils/getStorageClient'
 import { waitFor } from '../../utils/waitFor'
 
@@ -29,19 +28,14 @@ const createExplorerSlice = (set, get) => ({
         })
       }
 
-      const arfsClient = getArFSClient()
+      const storageApi = await getStorageApi()
 
       try {
-        const drives = await arfsClient.drive.listAll()
-        const selectedCapsuleDrive = drives[drives.length - 1]
+        const drives = await storageApi.api.drive.listAll()
 
         set((state) => {
           state.explorerState.drives = drives || []
         })
-
-        if (selectedCapsuleDrive) {
-          await get().explorerActions.setSelectedDrive(selectedCapsuleDrive)
-        }
       } catch (error) {
         console.log({ error })
         // TODO: use toast maybe?
@@ -65,10 +59,10 @@ const createExplorerSlice = (set, get) => ({
         })
       }
 
-      const arfsClient = getArFSClient()
+      const storageApi = await getStorageApi()
 
       try {
-        const entities = await arfsClient.folder.listAll(selectedFolder.folderId, selectedDrive.driveId)
+        const entities = await storageApi.api.folder.listAll(selectedFolder.folderId, selectedDrive.driveId)
 
         set((state) => {
           state.explorerState.folderEntities = entities || []
@@ -90,10 +84,10 @@ const createExplorerSlice = (set, get) => ({
         return
       }
 
-      const arfsClient = getArFSClient()
+      const storageApi = await getStorageApi()
 
       try {
-        const drive = await arfsClient.drive.create(name, { visibility: isPrivate ? 'private' : 'public' })
+        const drive = await storageApi.api.drive.create(name, { visibility: isPrivate ? 'private' : 'public' })
 
         set((state) => {
           state.explorerState.drives.push(drive)
@@ -121,10 +115,10 @@ const createExplorerSlice = (set, get) => ({
         return
       }
 
-      const arfsClient = getArFSClient()
+      const storageApi = await getStorageApi()
 
       try {
-        const folder = await arfsClient.folder.create(name, {
+        const folder = await storageApi.api.folder.create(name, {
           driveId: selectedDrive.driveId,
           parentFolderId: selectedFolder.folderId,
           visibility: selectedDrive.drivePrivacy === 'private' ? 'private' : 'public'
@@ -154,17 +148,16 @@ const createExplorerSlice = (set, get) => ({
         return
       }
 
-      const arfsClient = getArFSClient()
-      const fileBuffer = await file.arrayBuffer()
+      const storageApi = await getStorageApi()
 
       try {
-        const fileEntity = await arfsClient.file.create({
+        const fileEntity = await storageApi.api.file.create({
           name: file.name,
           size: file.size,
           dataContentType: file.type,
           driveId: selectedDrive.driveId,
           parentFolderId: selectedFolder.folderId,
-          file: fileBuffer,
+          file,
           visibility: selectedDrive.drivePrivacy === 'private' ? 'private' : 'public'
         })
 
@@ -185,18 +178,18 @@ const createExplorerSlice = (set, get) => ({
         // TODO: use toast maybe?
         return
       }
-    
+
       const storageApi = await getStorageApi()
 
       try {
-        const {success} = await storageApi.quickUpload(file,{
+        const { success } = await storageApi.quickUpload(file, {
           name: file.name,
           size: file.size,
           dataContentType: file.type,
           tags: [{ name: 'Content-Type', value: file.type }]
         })
 
-       return success
+        return success
       } catch (error) {
         console.log({ error })
         // TODO: use toast maybe?
@@ -255,10 +248,10 @@ const createExplorerSlice = (set, get) => ({
           state.explorerState.isSyncing = true
         })
       }
-      const arfsClient = getArFSClient()
+      const storageApi = await getStorageApi()
 
       try {
-        const folderInstance = await arfsClient.folder.get(drive.rootFolderId, drive.driveId)
+        const folderInstance = await storageApi.api.folder.get(drive.rootFolderId, drive.driveId)
 
         if (!folderInstance) {
           // TODO: use toast maybe?

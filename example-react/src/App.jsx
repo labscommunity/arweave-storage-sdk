@@ -1,9 +1,9 @@
 import { HashRouter, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import FilesPage from './pages/FilesPage'
+import FileSystemPage from './pages/FileSystem'
 
 function App() {
-  
   return (
     <HashRouter>
       <Routes>
@@ -16,15 +16,15 @@ function App() {
             </Layout>
           }
         />
-        {/* <Route
+        <Route
           index
-          path="/drive/:id"
+          path="/arfs"
           element={
             <Layout>
-              <ExplorerPage />
+              <FileSystemPage />
             </Layout>
           }
-        /> */}
+        />
       </Routes>
     </HashRouter>
   )

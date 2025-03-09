@@ -5,8 +5,11 @@ import React from 'react'
 import NewFolderModal from './NewFolderModal'
 import FileFolderUploader from './FileFolderUploader'
 import UploadFile from './UploadFile'
+import { Link, useLocation } from 'react-router-dom'
+import clsx from 'clsx'
 
 const SideNav = () => {
+  const { pathname } = useLocation()
   const [isNewOptionsListOpen, setIsNewOptionsListOpen] = React.useState(false)
   const [isNewFolderModalOpen, setIsNewFolderModalOpen] = React.useState(false)
   const [isFileUploadModalOpen, setIsFileUploadModalOpen] = React.useState(false)
@@ -46,15 +49,27 @@ const SideNav = () => {
           )}
         </div>
 
-        <a href="#" className="flex items-center text-[#0061FF] py-2 px-4 rounded-lg bg-blue-50">
+        <Link to="/" className={clsx(
+            'flex items-center text-gray-700 hover:bg-gray-100 py-2 px-4 rounded-lg',
+            pathname === '/' && 'bg-gray-100'
+          )}
+        >
           <i className="bi bi-folder mr-3"></i>
           Files
-        </a>
-        <a href="#" className="flex items-center text-gray-700 hover:bg-gray-100 py-2 px-4 rounded-lg">
+        </Link>
+        <Link to="/arfs" className={clsx(
+            'flex items-center text-gray-700 hover:bg-gray-100 py-2 px-4 rounded-lg',
+            pathname === '/arfs' && 'bg-gray-100'
+          )}
+        >
           <i className="bi bi-hdd mr-3"></i>
           Drive
-        </a>
-        <a href="#" className="flex items-center text-gray-700 hover:bg-gray-100 py-2 px-4 rounded-lg">
+        </Link>
+        <a href="#" className={clsx(
+            'flex items-center text-gray-700 hover:bg-gray-100 py-2 px-4 rounded-lg',
+            pathname === '/recents' && 'bg-gray-100'
+          )}
+        >
           <i className="bi bi-clock-history mr-3"></i>
           Recents
         </a>

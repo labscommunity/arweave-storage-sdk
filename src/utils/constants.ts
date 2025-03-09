@@ -27,7 +27,7 @@ export const NetworkChainMap: Record<Network, ChainInfo> = {
     chainName: 'Base Mainnet',
     chainType: ChainType.evm,
     network: ChainNetwork.Mainnet,
-    rpcUrl: 'https://1rpc.io/base'
+    rpcUrl: 'https://mainnet.base.org'
   },
   [Network.BASE_TESTNET]: {
     chainId: 84532,

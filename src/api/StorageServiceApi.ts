@@ -30,8 +30,8 @@ export class StorageServiceApi {
     this.wallet = wallet
     this.auth = new AuthClient()
     this.user = new UserClient()
-    this.upload = new UploadClient(this.payment, this.wallet)
     this.payment = new EvmPaymentService(wallet) // TODO: after adding more chains, remove this
+    this.upload = new UploadClient(this.payment, this.wallet)
 
     this.baseTags = baseTags
 

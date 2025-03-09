@@ -3,11 +3,11 @@ query($cursor: String $address: String! $appName: String!) {
     transactions(        
       after: $cursor
       first: 100
+      owners: [$address]
       tags: [
         { name: "App-Name", values: [$appName]}
         { name: "Entity-Type", values: "drive" }
         { name: "Drive-Privacy", values: ["public", "private"] }
-        { name: "Owner", values: [$address] }
       ]
     ) {
       pageInfo {

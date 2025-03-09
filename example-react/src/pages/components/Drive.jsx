@@ -9,7 +9,7 @@ export default function Drive({ instance, handleDriveClick, handleRigthClick }) 
       whileTap={{ scale: 0.95 }}
       onContextMenu={(e) => handleRigthClick(e, instance)}
       onBlur={() => console.log('test')}
-      className="cursor-pointer flex flex-col items-center gap-2 hover:bg-slate-700 p-4 rounded-md h-full text-neutral-200 hover:text-white transition-colors"
+      className="cursor-pointer flex flex-col items-center gap-2 hover:bg-gray-300 p-4 rounded-md h-full text-gray-500 transition-colors"
     >
       <div className="hover:text-inherit text-inherit">
         <FaHardDrive className="w-8 h-8 hover:text-inherit text-inherit" />
