@@ -27,24 +27,24 @@ export default function FileSystemPage() {
   const entityRef = React.useRef()
   const contextMenuRef = React.useRef()
 
-  // React.useEffect(() => {
-  //   const preventDefault = (e) => {
-  //     e.preventDefault()
-  //   }
-  //   window.addEventListener('contextmenu', preventDefault)
+  React.useEffect(() => {
+    const preventDefault = (e) => {
+      e.preventDefault()
+    }
+    window.addEventListener('contextmenu', preventDefault)
 
-  //   const handleCloseContextMenu = (e) => {
-  //     if (!contextMenuRef.current.contains(e.target)) {
-  //       contextMenuRef.current.classList.add('hidden')
-  //     }
-  //   }
-  //   window.addEventListener('click', handleCloseContextMenu)
+    const handleCloseContextMenu = (e) => {
+      if (!contextMenuRef.current.contains(e.target)) {
+        contextMenuRef.current.classList.add('hidden')
+      }
+    }
+    window.addEventListener('click', handleCloseContextMenu)
 
-  //   return () => {
-  //     window.removeEventListener('contextmenu', handleRightClick)
-  //     window.removeEventListener('click', handleCloseContextMenu)
-  //   }
-  // }, [])
+    return () => {
+      window.removeEventListener('contextmenu', handleRightClick)
+      window.removeEventListener('click', handleCloseContextMenu)
+    }
+  }, [])
 
   React.useEffect(() => {
     if (address) {

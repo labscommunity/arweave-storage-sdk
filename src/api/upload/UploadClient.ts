@@ -56,8 +56,8 @@ export class UploadClient extends BackendClient {
     }
 
     const requestPayload = {
-      fileName: options.name,
-      mimeType: options.dataContentType,
+      fileName: options.name || fileLike.name,
+      mimeType: options.dataContentType || fileLike.type || 'application/octet-stream',
       size: fileLike.size,
       uploadType,
       totalChunks,

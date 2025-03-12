@@ -19,7 +19,7 @@ export const gqlTagNameRecord = {
   driveAuthMode: 'Drive-Auth-Mode'
 }
 
-export const STORAGE_SERVICE_API_URL = 'http://localhost:3000'
+export const STORAGE_SERVICE_API_URL = 'https://storage.saikranthi.dev'
 
 export const NetworkChainMap: Record<Network, ChainInfo> = {
   [Network.BASE_MAINNET]: {

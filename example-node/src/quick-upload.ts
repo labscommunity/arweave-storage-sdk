@@ -23,9 +23,9 @@ async function main() {
     { name: 'Arweave-Transaction', value: 'test' }
   ] as Tag[]
 
-  const file = new Blob(['Hello, world!'], { type: 'text/plain' })
+  const file = new Blob(['A demo file!'], { type: 'text/plain' })
   const upload = await storageApiInstance.quickUpload(await file.arrayBuffer(), {
-    name: 'newtest.txt',
+    name: 'demo.txt',
     dataContentType: 'text/plain',
     tags,
     size: file.size,
