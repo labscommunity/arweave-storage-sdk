@@ -1,113 +1,245 @@
-## Capsule SDK Documentation
+# Arweave Storage SDK
 
-### Overview
+The **Arweave Storage SDK** is a comprehensive toolkit designed to easily store any type of data permanently, facilitating seamless file and folder management on the Arweave blockchain. It leverages Arweave's decentralized permanent storage capabilities and ArFS specification to offer a robust solution for managing drives, folders, and files in a secure and immutable manner. With built-in encryption support, Arweave Storage SDK allows you to store files privately ensuring only authorized parties can access the content.
 
-The Capsule SDK is a comprehensive toolkit designed to interact with the Arweave network, facilitating file and folder management within a decentralized file system. It leverages Arweave's permanent storage capabilities to offer a robust solution for managing drives, folders, and files in a secure and immutable manner.
+For seamless data storage and retrieval on [Arweave](https://www.arweave.org/), use the [`Arweave Storage SDK`](https://www.npmjs.com/package/arweave-storage-sdk).
 
-### Installation
+---
 
-To use the Capsule SDK in your project, you need to install it via npm or yarn. Ensure you have Node.js installed in your environment before proceeding.
+## Documentation
 
-```bash
-npm install capsule-js
+The SDK is structured around several key services and models that produce Arweave compatible transactions:
+
+- **Drives** – Create, list, and manage Arweave Storage SDK’s drives.  
+    
+- **Folders** – Organize files in a hierarchical folder system.  
+    
+- **Files** – Create, download, and manage file data.  
+    
+- **Query** – Get uploaded file links, search for files using tags.
+
+---
+
+## Requirements
+
+- **Node 18 or higher.**
+
+The library makes use of modern JavaScript/TypeScript features that require at least Node 18\.
+
+---
+
+## Installation
+
+Install the package with:
+
 ```
 
-or
+npm install arweave-storage-sdk
 
-```bash
-yarn add capsule-js
+# or
+
+yarn add arweave-storage-sdk
+
 ```
 
-### Key Components
+*This simple installation command adds Arweave Storage SDK to your project. It’s designed to integrate quickly, whether you’re building a prototype or a production-level application.*  
+---
 
-The SDK is structured around several key services and models that interact with the Arweave network:
+## Usage
 
-1. **Capsule**: The main entry point for using the SDK. It initializes the necessary services with provided configuration.
+Below is a quick example of how to initialize the Arweave Storage SDK,create a drive, a folder, and a file, or quickly upload a file. For more detailed use-cases, refer to the [Examples](https://github.com) section.
 
-2. **Services**:
+### Basic Setup
 
-   - **DriveService**: Manages operations related to drives such as creation, retrieval, and modification.
-   - **FolderService**: Handles folder-related operations including creation and listing of folder contents.
-   - **FileService**: Provides functionality to manage files, including uploading and downloading.
+To use the SDK, initialize StorageApi with a configuration object. This will create a new Arweave Storage SDK client. You may also specify the application name (`appName`) and optional configurations.
 
-3. **Models**:
+```javascript
+const { Configuration, StorageApi, Token, Network } = require('arweave-storage-sdk');
 
-   - **Drive**: Represents a drive entity on the Arweave network.
-   - **Folder**: Represents a folder within a drive.
-   - **File**: Represents a file within a folder.
+const config = new Configuration({
+	appName: '<Name of your App>'
+	privateKey: '<ENV to private key or use_web_wallet>',
+	network: Network.BASE_MAINNET,
+	token: Token.USDC
+})
 
-4. **Utilities**:
-   - **Crypto**: Provides encryption and decryption functionalities for private drives and files.
-   - **ArFSApi**: Handles API calls to the Arweave network.
+const storageClient = new StorageApi(config);
+await storageApiInstance.ready
 
-### Usage Example
-
-#### Create a new drive
-
-Below is a simple example demonstrating how to initialize the SDK and create a new drive:
-
-```ts
-import { Capsule } from 'capsule-js'
-
-const capsule = new Capsule({ wallet: 'use_wallet', appName: 'arfs-js-drive' })
-
-const drive = await capsule.drive.create('My Drive', { visibility: 'public' })
 ```
 
-#### Create a new folder
+### Authentication
 
-Below is a simple example demonstrating how to initialize the SDK and create a new folder:
+Once you have the storage client initialized and before you go ahead to upload any files, its really important to create a secured session by authenticating yourself. This allows you to track or query your uploads, receipts. It is easy and can be done in one line.
 
-```ts
-import { Capsule } from 'capsule-js'
+```javascript
+  //Login
+  await storageApiInstance.api.login()
+```
 
-const capsule = new Capsule({ wallet: 'use_wallet', appName: 'arfs-js-drive' })
+And that's it. You’re ready to make authenticated requests with the service.
 
-const folder = await capsule.folder.create('My Folder', {
-  driveId: '<driveId>',
-  parentFolderId: '<parentFolderId>',
-  visibility: 'public'
+### Upload cost estimates
+
+Assuming you have a valid session post login, the next step is to query for file upload prices. This is an optional step, in-case you are interested in setting up uploads conditionally or to check your wallet for enough balance before your upload. Based on your selected token and network, estimates will be provided to you in the same token and also in USD. 
+
+```javascript
+export interface GetEstimatesResponse {
+  size: number
+  usd: number
+  usdc: {
+    amount: string
+    amountInSubUnits: string
+  }
+  payAddress: string
+}
+const size = file.size // 200000 bytes
+const estimates = await storageClient.getEstimates(size) // size of type number
+
+console.log(estimates)
+{ 
+  "data": { 
+"size": 200000, 
+"usd": 0.008599242237052303, 
+"usdc": { 
+"amount": "0.0086", 
+"amountInSubUnits": "8600" 
+}, 
+"payAddress": "<USDC ADDRESS OF THE SERVICE>" 
+  } 
+}
+```
+
+### Quick file upload
+
+Upload a file (or buffer) quickly using the quickUpload method.
+
+The `quickUpload` method simplifies the process of uploading a file to Arweave. It automatically handles the creation of the transaction, including setting metadata such as content type, visibility, and tags. The receipt returned includes the unique ID, to query and confirm the file upload.
+
+```javascript
+
+const file = <web File object, file path, buffer or stream>const receipt = await storageClient.quickUpload(file, {
+	name: file.name || "test.txt",
+	dataContentType: 'text/plain', // content type of the file
+	visibility: '<public|private>',
+	tags: [{name: "Collection-Type", value: "ART"}],	size: file.size // size in bytes of type number
+});
+
+console.log('File has been uploaded. receipt:', receipt.id);
+
+```
+
+### 
+
+### Creating a Drive
+
+Create a new drive to manage your files on Arweave.
+
+Drives act as containers for your files and folders. The additional parameters such as visibility and tags help you categorize and control access to your content. This context is useful if you’re new to managing storage on decentralized platforms.
+
+```javascript
+
+const drive = await storageClient.drive.create('My Drive', { 
+visibility: 'public',
+tags: [{name: "Collection-Type", value: "ART"}] 
+});
+
+console.log('Drive created with ID:', drive.id);
+
+```
+
+### 
+
+### Creating a Folder
+
+Organize your files by creating folders within a drive.
+
+Folders help you structure your files within a drive. In this example, you can see how to specify the parent drive and (optionally) a parent folder to build a hierarchical file system. 
+
+```javascript
+
+const folder = await storageClient.folder.create('My Folder', {
+driveId: '<driveId>',
+parentFolderId: '<parentFolderId>',
+visibility: 'public',
+tags: [{name: "Collection-Type", value: "ART"}]
+});
+
+console.log('Folder created with ID:', folder.id);
+
+```
+
+### Creating a File
+
+Store a file on Arweave by creating a file transaction.
+
+This snippet creates a file by converting a string into a buffer and then sending it as a transaction to Arweave. The parameters include metadata like file name, size, and content type.
+
+```javascript
+
+const fileData = Buffer.from('Hello, Arweave!');
+
+const file = await storageClient.file.create({
+	name: 'My File',
+	size: fileData.length,
+	dataContentType: 'text/plain',
+	driveId: '<driveId>',
+	parentFolderId: '<parentFolderId>',
+	file: fileData,
+	visibility: 'public',
+	tags: [{name: "Collection-Type", value: "ART"}]
+});
+
+console.log('File uploaded; transaction ID:', file.txId);
+
+```
+
+**Note**: The `visibility` field can be set to `public` or `private`.
+
+---
+
+## Wallet
+
+Arweave Storage SDK’s WalletService is designed to help you interact with your stored files and manage your funds. Whether you need to fetch a list of files or check your wallet balance, this service simplifies those tasks. Here’s what you can do with this WalletService:
+
+* **Get all Files:** Retrieve all uploaded file links.  
+* **SearchFile:** Search for files using tags.  
+* **Balances:** Read wallet balances.
+
+---
+
+## Configuration
+
+Initialize the **Arweave Storage SDK** object with various configuration options.  The `appName` is recommended as it helps in organizing and searching your transactions on Arweave. The `privateKey` can either be your account’s key or a flag to use a browser wallet. Other parameters like `network`, `token`, and `gateway` let you tailor the SDK to your specific environment.
+
+```javascript
+
+const { Configuration, Network, Token} = require('arweave-storage-sdk');
+
+const config = new Configuration({
+	appName: 'My cool project'
+	privateKey: process.env.PRIVATE_KEY,
+	network: Network.BASE_MAINNET,
+	token: Token.USDC
 })
 ```
 
-#### Create a new file
+| Option | Optional | Description |
+| :---- | :---- | :---- |
+| `appName` | true | App name to be used in Arweave transactions. Recommended to use since it makes searching all your app files easier. |
+| `privateKey` | false | Private key of your account. JWK in case of Arweave. if `'use_web_wallet'` is used, sdk will rely on browser wallets. |
+| `network` | true | Network of your payment token. Eg: 'SOL\_MAINNET'. Simply use the Network object provided by the sdk to see supported networks. Defaults to Arweave. |
+| `token` | true | Token to use for payments. Eg: 'USDT'. Use the Token object provided by the sdk to see all supported tokens. Defaults to AR. |
 
-Below is a simple example demonstrating how to initialize the SDK and create a new file:
+## 
 
-```ts
-import { Capsule } from 'capsule-js'
+## 
 
-const capsule = new Capsule({ wallet: 'use_wallet', appName: 'arfs-js-drive' })
+## **Other Configuration Notes**
 
-const file = await capsule.file.create({
-  name: 'My File',
-  size: 1024,
-  dataContentType: 'text/plain',
-  driveId: '<driveId>',
-  parentFolderId: '<parentFolderId>',
-  file: fileBuffer,
-  visibility: 'public'
-})
-```
+* **Encryption:** For private drives or file storage, use the built-in Crypto utilities to manage encryption.  
+* **API Calls:** The SDK uses the ArFSApi internally to interact with the Arweave network. You can override or customize gateway endpoints if needed.
 
-### Configuration
 
-The SDK can be configured with the following options:
-
-- **gateway**: URL to the Arweave gateway.
-- **wallet**: Path or object representing the Arweave wallet.
-- **appName**: Optional. Name of the application using the SDK.
-
-### API Reference
-
-Detailed API documentation is available for all classes and methods provided by the SDK. This includes parameters, return types, and descriptions of each function.
-
-### Contributing
-
-Contributions to the Capsule SDK are welcome. Please refer to the project's GitHub repository to submit issues or pull requests.
-
-### License
-
-The SDK is licensed under the ISC license, allowing for free and open usage in both personal and commercial projects.
-
-This documentation provides a high-level overview and starting points for integrating the Capsule SDK into your projects. For more detailed information, refer to the source code and further documentation in the SDK's repository.
+  
+---
