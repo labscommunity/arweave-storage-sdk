@@ -1,6 +1,6 @@
 import { EntityKey } from '../EntityKey'
 
-export async function getDeriveKey(ikm: ArrayBuffer, option?: { salt?: Buffer; info?: Buffer }) {
+export async function getDeriveKey(ikm: BufferSource, option?: { salt?: Buffer; info?: Buffer }) {
   const { salt, info } = option || {}
 
   const cryptoKey = await globalThis.crypto.subtle.importKey(
