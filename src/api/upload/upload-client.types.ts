@@ -113,6 +113,9 @@ export interface QuickUploadOptions {
   tags: Tag[]
   size: number
   overrideFileName?: boolean
+  visibility?: UploadVisibility
 }
+
+export type UploadVisibility = 'public' | 'private'
 
 export type UploadDataItemOptions = Omit<QuickUploadOptions, 'tags' | 'size' | 'overrideFileName'>

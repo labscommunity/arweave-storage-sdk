@@ -87,6 +87,8 @@ export class UploadClient extends BackendClient {
       amountBn
     )
 
+    tags.push({ name: 'Upload-Request-ID', value: uploadRequest.id } as Tag)
+
     const uploadResponse = await this.uploadFile(fileLike, tags, uploadRequest.id, paymentReceipt.hash)
 
     return uploadResponse
@@ -140,6 +142,8 @@ export class UploadClient extends BackendClient {
       token.address,
       amountBn
     )
+
+    dataItem.tags.push({ name: 'Upload-Request-ID', value: uploadRequest.id } as Tag)
 
     const bundle = await bundleAndSignData([dataItem], this.arweaveWallet.signer)
 
