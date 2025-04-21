@@ -3,16 +3,16 @@ import { parse } from 'uuid'
 import { Wallet } from '../../types/api'
 import { EntityKey } from '../EntityKey'
 import { getDeriveKey } from './getDeriveKey'
-import { getPrivateHash } from './getPrivateHash'
+import { getSignature } from './getSignature'
 
 export async function deriveDriveKey(wallet: Wallet, driveId: string) {
   const entityIdBytes: Buffer = Buffer.from(parse(driveId) as Uint8Array) // The UUID of the driveId is the SALT used for the drive key
   const entityBuffer: Buffer = Buffer.from(new TextEncoder().encode('drive'))
 
-  const dataToHash: Buffer = Buffer.concat([entityBuffer, entityIdBytes] as Uint8Array[])
-  const hash: ArrayBuffer = await getPrivateHash(wallet, dataToHash as Uint8Array)
+  const signingKey: Buffer = Buffer.concat([entityBuffer, entityIdBytes] as Uint8Array[])
+  const walletSignature: Uint8Array = await getSignature(wallet, signingKey as Uint8Array)
 
-  const baseEntityKey = await getDeriveKey(hash)
+  const baseEntityKey = await getDeriveKey(walletSignature)
 
   const cryptoKey = await globalThis.crypto.subtle.deriveKey(
     {
@@ -52,4 +52,28 @@ export async function deriveFileKey(driveEntityKey: EntityKey, fileId: string): 
   )
 
   return cryptoKey
+}
+
+export async function deriveQuickUploadKey(wallet: Wallet, uploadId: string) {
+  const entityIdBytes: Buffer = Buffer.from(parse(uploadId) as Uint8Array) // The UUID of the driveId is the SALT used for the drive key
+  const entityBuffer: Buffer = Buffer.from(new TextEncoder().encode('quick-upload'))
+
+  const signingKey: Buffer = Buffer.concat([entityBuffer, entityIdBytes] as Uint8Array[])
+  const walletSignature: Uint8Array = await getSignature(wallet, signingKey as Uint8Array)
+
+  const baseEntityKey = await getDeriveKey(walletSignature)
+  const cryptoKey = await globalThis.crypto.subtle.deriveKey(
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      salt: new Uint8Array(),
+      info: new Uint8Array()
+    },
+    baseEntityKey.cryptoKey,
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['encrypt', 'decrypt']
+  )
+
+  return { baseEntityKey, aesKey: cryptoKey }
 }

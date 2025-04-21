@@ -6,7 +6,7 @@ import { StorageServiceApi } from './api'
 import { throwError } from './utils/errors/error-factory'
 import { FileSource } from './types/file'
 
-import { QuickUploadOptions } from './api/upload/upload-client.types'
+import { DownloadFileOptions, QuickUploadOptions } from './api/upload/upload-client.types'
 
 export class StorageApi {
   public api: StorageServiceApi
@@ -35,6 +35,10 @@ export class StorageApi {
     }
 
     return this.api.upload.quickUpload(data, options)
+  }
+
+  async downloadFile(options: DownloadFileOptions) {
+    await this.api.upload.downloadFile(options)
   }
 
   async getEstimates(size: number) {
