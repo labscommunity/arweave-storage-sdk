@@ -12,23 +12,55 @@ export class TokenStorage {
   private readonly accessTokenKey = `${this.storagePrefix}access_token`
   private readonly refreshTokenKey = `${this.storagePrefix}refresh_token`
   private readonly addressKey = `${this.storagePrefix}address`
-  private static db: Level | null = null
+  private readonly ready: Promise<void>
+  private db: Level | null = null
 
-  constructor() {
-    this.initialize()
+  private static instance: TokenStorage | null = null
+
+  private constructor() {
+    this.ready = this.initialize()
   }
 
-  private initialize() {
-    if (!TokenStorage.db) {
-      if (isServer()) {
-        // Node.js environment
-        const { mkdirSync } = importDynamic('fs')
-        const { join } = importDynamic('path')
-        const { homedir } = importDynamic('os')
-        mkdirSync(join(homedir(), AUTH_TOKEN_DB_PATH), { recursive: true })
-      }
-      TokenStorage.db = new Level(TokenStorage.getDBPath())
+  public static getInstance(): TokenStorage {
+    if (!TokenStorage.instance) {
+      TokenStorage.instance = new TokenStorage()
     }
+    return TokenStorage.instance
+  }
+
+  private async initialize() {
+    if (this.db) return
+
+    const dbPath = await TokenStorage.getDBPath()
+    if (isServer()) {
+      const { mkdirSync } = await importDynamic('fs')
+      const { homedir } = await importDynamic('os')
+      const { join } = await importDynamic('path')
+      mkdirSync(join(homedir(), AUTH_TOKEN_DB_PATH), { recursive: true })
+
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const db = new Level(dbPath)
+          await db.open()
+          this.db = db
+          return
+        } catch (err: any) {
+          // if it's the LOCK error, delete and retry once
+          if (err.message.includes('IO error') && err.message.includes('LOCK') && attempt === 0) {
+            const { unlinkSync } = await importDynamic('fs')
+            const { join } = await importDynamic('path')
+            const lockFile = join(dbPath, 'LOCK')
+            unlinkSync(lockFile)
+            continue
+          }
+          throw err
+        }
+      }
+    }
+
+    const db = new Level(dbPath)
+    await db.open()
+    this.db = db
   }
 
   /**
@@ -36,7 +68,9 @@ export class TokenStorage {
    */
   async setAccessToken(token: string): Promise<void> {
     try {
-      await TokenStorage.db!.put(this.accessTokenKey, token)
+      await this.ready
+
+      await this.db!.put(this.accessTokenKey, token)
     } catch (error) {
       console.error('Failed to store access token:', error)
       throw new Error('Failed to store access token')
@@ -48,7 +82,9 @@ export class TokenStorage {
    */
   async setRefreshToken(token: string): Promise<void> {
     try {
-      await TokenStorage.db!.put(this.refreshTokenKey, token)
+      await this.ready
+
+      await this.db!.put(this.refreshTokenKey, token)
     } catch (error) {
       console.error('Failed to store refresh token:', error)
       throw new Error('Failed to store refresh token')
@@ -57,16 +93,20 @@ export class TokenStorage {
 
   async setAddress(address: string): Promise<void> {
     try {
-      await TokenStorage.db!.put(this.addressKey, address)
+      await this.ready
+
+      await this.db!.put(this.addressKey, address)
     } catch (error) {
       console.error('Failed to store address:', error)
       throw new Error('Failed to store address')
-      }
+    }
   }
 
   async getAddress(): Promise<string | null> {
     try {
-      const address = await TokenStorage.db!.get(this.addressKey)
+      await this.ready
+
+      const address = await this.db!.get(this.addressKey)
       return address
     } catch (error) {
       console.error('Failed to retrieve address:', error)
@@ -79,7 +119,9 @@ export class TokenStorage {
    */
   async getAccessToken(): Promise<string | null> {
     try {
-      const token = await TokenStorage.db!.get(this.accessTokenKey)
+      await this.ready
+
+      const token = await this.db!.get(this.accessTokenKey)
       return token
     } catch (error) {
       if ((error as any).code === 'LEVEL_NOT_FOUND') {
@@ -95,7 +137,9 @@ export class TokenStorage {
    */
   async getRefreshToken(): Promise<string | null> {
     try {
-      const token = await TokenStorage.db!.get(this.refreshTokenKey)
+      await this.ready
+
+      const token = await this.db!.get(this.refreshTokenKey)
       return token
     } catch (error) {
       if ((error as any).code === 'LEVEL_NOT_FOUND') {
@@ -111,7 +155,9 @@ export class TokenStorage {
    */
   async clearTokens(): Promise<void> {
     try {
-      await TokenStorage.db!.batch([
+      await this.ready
+
+      await this.db!.batch([
         { type: 'del', key: this.accessTokenKey },
         { type: 'del', key: this.refreshTokenKey }
       ])
@@ -120,13 +166,15 @@ export class TokenStorage {
     }
   }
 
-  private static getDBPath(): string {
+  private static async getDBPath(): Promise<string> {
     return isServer()
-      ? (() => {
-          const { join } = importDynamic('path')
-          const { homedir } = importDynamic('os')
+      ? (async () => {
+          const { join } = await importDynamic('path')
+          const { homedir } = await importDynamic('os')
           return join(homedir(), AUTH_TOKEN_DB_PATH)
         })()
       : AUTH_TOKEN_DB_PATH
   }
 }
+
+export const tokenStorage = TokenStorage.getInstance()
