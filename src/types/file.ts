@@ -30,9 +30,9 @@ export namespace NodeJs {
 
     static async fromPath(filePath: string, name?: string, mimeType?: string, lastModified?: number) {
       if (isServer()) {
-        const fs = importDynamic('fs')
-        const path = importDynamic('path')
-        const mime = importDynamic('mime-types')
+        const fs = await importDynamic('fs')
+        const path = await importDynamic('path')
+        const mime = await importDynamic('mime-types')
 
         if (!fs.existsSync(filePath)) {
           throw new NotFound('Could not find a file in your filesystem: ' + filePath)

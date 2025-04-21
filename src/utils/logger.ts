@@ -6,17 +6,24 @@ const ERROR_LOG_FILE = 'arweave-storage-sdk-error.log'
 export class Logger {
   static debug: boolean = false
   static logToFile: boolean = false
+  private static fs: typeof import('fs') | null = null
 
-  static error = function (error: any) {
+  public static async init() {
+    if (Logger.logToFile && isServer()) {
+      Logger.fs = await importDynamic('fs')
+    }
+  }
+
+  static error = async function (error: any) {
     if (this.debug) {
       console.error(error)
     }
-    if (this.logToFile && isServer()) {
-      const fs = importDynamic('fs')
+    if (this.logToFile && isServer() && Logger.fs) {
       const logMessage = `${new Date().toISOString()} - ERROR - ${formatErrorLog(error)}\n`
-      fs.appendFileSync(ERROR_LOG_FILE, logMessage)
+      Logger.fs.appendFileSync(ERROR_LOG_FILE, logMessage)
     }
   }
+  
   static log = function (message: any) {
     if (this.debug) {
       console.log(message)
