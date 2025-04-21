@@ -4,6 +4,8 @@ import { BackendClient } from '../BackendClient'
 import {
   CreateUploadRequestPayload,
   CreateUploadRequestResponse,
+  DownloadFileOptions,
+  DownloadFromArweaveOptions,
   GetEstimatesPayload,
   GetEstimatesResponse,
   QuickUploadOptions,
@@ -45,7 +47,83 @@ export class UploadClient extends BackendClient {
     this.crypto = crypto
   }
 
-  async downloadFile(uploadId: string) {
+  async downloadFile(options: DownloadFileOptions) {
+    const accessToken = await this.getAccessToken()
+
+    const { uploadId, skipSave, path } = options
+
+    const data = await this.getUploadById(uploadId)
+
+    const { arweaveTxId, mimeType, fileName } = data
+
+    return this.downloadFileFromArweave({ uploadId, arweaveTxId, fileName, mimeType, skipSave, path })
+  }
+
+  async downloadFileFromArweave(options: DownloadFromArweaveOptions) {
+    const { arweaveTxId, fileName, mimeType, skipSave, path, uploadId } = options
+
+    const txDataRes = await fetch(`https://arweave.net/${arweaveTxId}`)
+    let dataArrayBuffer = await txDataRes.arrayBuffer()
+
+    const cipherIV = await this.arweaveWallet.queryEngine?.argql.fetchTxTag(arweaveTxId, 'Cipher-IV')
+
+    if (cipherIV) {
+      const { aesKey } = await deriveQuickUploadKey(this.arweaveWallet.getPrivateKey(), uploadId)
+      const decryptedFileBuffer = await this.crypto.decryptEntity(aesKey, cipherIV, dataArrayBuffer)
+      dataArrayBuffer = decryptedFileBuffer
+    }
+
+    if (isServer()) {
+      const fs = importDynamic('fs')
+      return new Promise((resolve, reject) => {
+        const filePath = `${path || process.cwd()}/${fileName}`
+        fs.writeFile(filePath, Buffer.from(dataArrayBuffer), (error) => {
+          if (error) reject(error)
+          resolve(filePath)
+        })
+      })
+    } else {
+      const blob = new Blob([dataArrayBuffer], { type: mimeType })
+      const url = window.URL.createObjectURL(blob)
+      if (!skipSave) {
+        const a = document.createElement('a')
+        a.download = path
+        a.href = url
+        a.click()
+      }
+      return url
+    }
+  }
+
+  async getUploads({ page = 1, limit = 10 }: { page?: number; limit?: number }) {
+    const accessToken = await this.getAccessToken()
+
+    const response = await this.httpClient.get(`/upload?page=${page}&limit=${limit}`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    })
+
+    if (response.status !== 200) {
+      throwError(response.status, response?.data?.message)
+    }
+
+    return response.data.data
+  }
+
+  async getReceipts({ page = 1, limit = 10 }: { page?: number; limit?: number }) {
+    const accessToken = await this.getAccessToken()
+
+    const response = await this.httpClient.get(`/receipt?page=${page}&limit=${limit}`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    })
+
+    if (response.status !== 200) {
+      throwError(response.status, response?.data?.message)
+    }
+
+    return response.data.data
+  }
+
+  async getUploadById(uploadId: string) {
     const accessToken = await this.getAccessToken()
 
     const response = await this.httpClient.get(`/upload/${uploadId}`, {
@@ -56,43 +134,21 @@ export class UploadClient extends BackendClient {
       throwError(response.status, response?.data?.message)
     }
 
-    const { data } = response.data
-
-    const { arweaveTxId } = data
-
-    return this.downloadFileFromArweave(uploadId, arweaveTxId, './downloaded-file.txt', true)
+    return response.data.data
   }
 
-  async downloadFileFromArweave(uploadId: string, txId: string, path: string, skipSave: boolean = false) {
-    const txDataRes = await fetch(`https://arweave.net/${txId}`)
-    const dataArrayBuffer = await txDataRes.arrayBuffer()
+  async getReceiptById(receiptId: string) {
+    const accessToken = await this.getAccessToken()
 
-    const cipherIV = await this.arweaveWallet.queryEngine?.argql.fetchTxTag(txId, 'Cipher-IV')
+    const response = await this.httpClient.get(`/upload/receipt/${receiptId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    })
 
-    if (!cipherIV) throw new Error('CipherIV Missing. Failed to decrypt.')
-
-    const { aesKey } = await deriveQuickUploadKey(this.arweaveWallet.getPrivateKey(), uploadId)
-    const decryptedFileBuffer = await this.crypto.decryptEntity(aesKey, cipherIV, dataArrayBuffer)
-
-    if (isServer()) {
-      const fs = importDynamic('fs')
-      return new Promise((resolve, reject) => {
-        fs.writeFile(path, Buffer.from(decryptedFileBuffer), (error) => {
-          if (error) reject(error)
-          resolve(path)
-        })
-      })
-    } else {
-      const blob = new Blob([decryptedFileBuffer], { type: 'text/plain' })
-      const url = window.URL.createObjectURL(blob)
-      if (!skipSave) {
-        const a = document.createElement('a')
-        a.download = path
-        a.href = url
-        a.click()
-      }
-      return url
+    if (response.status !== 200) {
+      throwError(response.status, response?.data?.message)
     }
+
+    return response.data.data
   }
 
   async quickUpload(data: FileSource, options: QuickUploadOptions) {

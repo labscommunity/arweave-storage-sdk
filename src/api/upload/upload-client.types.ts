@@ -116,6 +116,18 @@ export interface QuickUploadOptions {
   visibility?: UploadVisibility
 }
 
+export interface DownloadFileOptions {
+  uploadId: string
+  skipSave?: boolean
+  path?: string
+}
+
+export interface DownloadFromArweaveOptions extends DownloadFileOptions {
+  arweaveTxId: string
+  fileName: string
+  mimeType: string
+}
+
 export type UploadVisibility = 'public' | 'private'
 
 export type UploadDataItemOptions = Omit<QuickUploadOptions, 'tags' | 'size' | 'overrideFileName'>
