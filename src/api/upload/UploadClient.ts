@@ -106,7 +106,7 @@ export class UploadClient extends BackendClient {
       throwError(response.status, response?.data?.message)
     }
 
-    return response.data.data
+    return response.data
   }
 
   async getReceipts({ page = 1, limit = 10 }: { page?: number; limit?: number }) {
@@ -120,7 +120,7 @@ export class UploadClient extends BackendClient {
       throwError(response.status, response?.data?.message)
     }
 
-    return response.data.data
+    return response.data
   }
 
   async getUploadById(uploadId: string) {
