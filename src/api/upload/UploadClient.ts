@@ -8,7 +8,8 @@ import {
   GetEstimatesResponse,
   QuickUploadOptions,
   UploadChunkResponse,
-  UploadDataItemOptions
+  UploadDataItemOptions,
+  UploadVisibility
 } from './upload-client.types'
 import { DEFAULT_CHUNK_SIZE_IN_BYTES } from '../../utils/constants'
 import { FileLike, FileSource } from '../../types/file'
@@ -18,11 +19,17 @@ import { EvmPaymentService } from '../../services/evm-payment.service'
 import { createFileLike } from '../../utils/createFileLike'
 import { applyFileTags, getSDKTags } from '../../utils/getSDKTags'
 import { WalletService } from '../../wallet/WalletService'
+import { deriveQuickUploadKey } from '../../crypto/utils/keys'
+import { Crypto } from '../../crypto'
+import { isServer } from '../../utils/platform'
+import { importDynamic } from '../../utils/importDynamic'
+import { StreamConverter } from '../../utils/stream-converter'
 
 export class UploadClient extends BackendClient {
   private arweaveWallet: ArweaveWallet | null = null
   private payment: EvmPaymentService
   private wallet: WalletService
+  private crypto: Crypto
 
   constructor(payment: EvmPaymentService, wallet: WalletService) {
     super()
@@ -32,6 +39,60 @@ export class UploadClient extends BackendClient {
 
   setArweaveWallet(arweaveWallet: ArweaveWallet) {
     this.arweaveWallet = arweaveWallet
+  }
+
+  setCrypto(crypto: Crypto) {
+    this.crypto = crypto
+  }
+
+  async downloadFile(uploadId: string) {
+    const accessToken = await this.getAccessToken()
+
+    const response = await this.httpClient.get(`/upload/${uploadId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    })
+
+    if (response.status !== 200) {
+      throwError(response.status, response?.data?.message)
+    }
+
+    const { data } = response.data
+
+    const { arweaveTxId } = data
+
+    return this.downloadFileFromArweave(uploadId, arweaveTxId, './downloaded-file.txt', true)
+  }
+
+  async downloadFileFromArweave(uploadId: string, txId: string, path: string, skipSave: boolean = false) {
+    const txDataRes = await fetch(`https://arweave.net/${txId}`)
+    const dataArrayBuffer = await txDataRes.arrayBuffer()
+
+    const cipherIV = await this.arweaveWallet.queryEngine?.argql.fetchTxTag(txId, 'Cipher-IV')
+
+    if (!cipherIV) throw new Error('CipherIV Missing. Failed to decrypt.')
+
+    const { aesKey } = await deriveQuickUploadKey(this.arweaveWallet.getPrivateKey(), uploadId)
+    const decryptedFileBuffer = await this.crypto.decryptEntity(aesKey, cipherIV, dataArrayBuffer)
+
+    if (isServer()) {
+      const fs = importDynamic('fs')
+      return new Promise((resolve, reject) => {
+        fs.writeFile(path, Buffer.from(decryptedFileBuffer), (error) => {
+          if (error) reject(error)
+          resolve(path)
+        })
+      })
+    } else {
+      const blob = new Blob([decryptedFileBuffer], { type: 'text/plain' })
+      const url = window.URL.createObjectURL(blob)
+      if (!skipSave) {
+        const a = document.createElement('a')
+        a.download = path
+        a.href = url
+        a.click()
+      }
+      return url
+    }
   }
 
   async quickUpload(data: FileSource, options: QuickUploadOptions) {
@@ -89,7 +150,13 @@ export class UploadClient extends BackendClient {
 
     tags.push({ name: 'Upload-Request-ID', value: uploadRequest.id } as Tag)
 
-    const uploadResponse = await this.uploadFile(fileLike, tags, uploadRequest.id, paymentReceipt.hash)
+    const uploadResponse = await this.uploadFile(
+      fileLike,
+      tags,
+      uploadRequest.id,
+      paymentReceipt.hash,
+      options.visibility
+    )
 
     return uploadResponse
   }
@@ -184,13 +251,32 @@ export class UploadClient extends BackendClient {
     return response.data.data
   }
 
-  // expects DataItem unsigned
-  async uploadFile(data: FileLike, tags: Tag[], uploadId: string, txId: string) {
+  // expects filelike
+  async uploadFile(
+    data: FileLike,
+    tags: Tag[],
+    uploadId: string,
+    txId: string,
+    visibility: UploadVisibility = 'public'
+  ) {
     if (!this.arweaveWallet) {
       throwError(500, 'Arweave wallet not initialized')
     }
 
-    const fileBuffer = await data.arrayBuffer()
+    if (visibility === 'private' && !this.crypto) {
+      throwError(500, 'Crypto utils not initialized')
+    }
+
+    let fileBuffer = await data.arrayBuffer()
+    // encrypt the file buffer using the aesKey for quick upload
+    if (visibility === 'private') {
+      const { aesKey } = await deriveQuickUploadKey(this.arweaveWallet.getPrivateKey(), uploadId)
+      const { data: encryptedData, cipher, cipherIV } = await this.crypto.encryptEntity(fileBuffer, aesKey)
+      fileBuffer = encryptedData
+      tags.push({ name: 'Cipher', value: cipher } as Tag)
+      tags.push({ name: 'Cipher-IV', value: cipherIV } as Tag)
+    }
+
     const dataItem = createData(new Uint8Array(fileBuffer), this.arweaveWallet.signer, { tags })
     const bundle = await bundleAndSignData([dataItem], this.arweaveWallet.signer)
 

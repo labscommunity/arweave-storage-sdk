@@ -37,6 +37,10 @@ export class StorageApi {
     return this.api.upload.quickUpload(data, options)
   }
 
+  async downloadFile(uploadId: string) {
+    await this.api.upload.downloadFile(uploadId)
+  }
+
   async getEstimates(size: number) {
     const response = await this.api.upload.getEstimates({
       size,

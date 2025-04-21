@@ -107,9 +107,9 @@ export class StorageServiceApi {
     const arKeys = await this.user.getUserArweaveWallet()
 
     this.arweaveWallet = new ArweaveWallet(arKeys.jwk, arKeys.address, arKeys.publicKey, this.wallet.config.appName)
-    this.upload.setArweaveWallet(this.arweaveWallet)
-
     this.crypto = new Crypto(this.arweaveWallet)
+    this.upload.setArweaveWallet(this.arweaveWallet)
+    this.upload.setCrypto(this.crypto)
     this.drive = new DriveService(this.arweaveWallet, this.baseTags, this.crypto, this.upload)
     this.folder = new FolderService(this.arweaveWallet, this.baseTags, this.crypto, this.upload)
     this.file = new FileService(this.arweaveWallet, this.baseTags, this.crypto, this.upload)
