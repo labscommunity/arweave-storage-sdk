@@ -74,7 +74,7 @@ export class UploadClient extends BackendClient {
     }
 
     if (isServer()) {
-      const fs = importDynamic('fs')
+      const fs = await importDynamic('fs')
       return new Promise((resolve, reject) => {
         const filePath = `${path || process.cwd()}/${fileName}`
         fs.writeFile(filePath, Buffer.from(dataArrayBuffer), (error) => {
