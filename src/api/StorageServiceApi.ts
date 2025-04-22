@@ -79,16 +79,24 @@ export class StorageServiceApi {
     const message = `
     Nonce: ${nonce}
     `
-    const signature = await this.wallet.signer?.signMessage(message)
+    const signature = await this.wallet.signMessage(message)
+    let publicKey
+
+    try {
+      publicKey = await this.wallet.getPublicKey()
+    } catch (error) {
+      console.warn(error)
+    }
 
     const payload = {
       walletAddress: this.wallet.address,
       chainType: this.wallet.chainInfo.chainType,
       signedMessage: message,
-      signature
+      signature,
+      publicKey
     }
 
-    await this.auth.verify(payload.walletAddress, payload.chainType, payload.signedMessage, payload.signature)
+    await this.auth.verify(payload)
 
     await this.initializeArweaveWallet()
   }

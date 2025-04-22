@@ -1,6 +1,7 @@
 import { ChainType } from '../../types'
 import { throwError } from '../../utils/errors/error-factory'
 import { BackendClient } from '../BackendClient'
+import { VerifyAuthOptions } from './types'
 
 export class AuthClient extends BackendClient {
   constructor() {
@@ -21,12 +22,15 @@ export class AuthClient extends BackendClient {
     return nonce as string
   }
 
-  async verify(walletAddress: string, chainType: ChainType, signedMessage: string, signature: string) {
+  async verify(options: VerifyAuthOptions) {
+    const { walletAddress, chainType, signedMessage, signature, publicKey } = options
+
     const response = await this.httpClient.post('/auth/verify', {
       walletAddress,
       chainType,
       signedMessage,
-      signature
+      signature,
+      publicKey
     })
 
     if (response.status !== 201 || !response?.data?.data) {

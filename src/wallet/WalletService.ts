@@ -1,4 +1,7 @@
+import { ChainType } from '../types'
 import { ChainInfo, NetworkChainMap } from '../utils/constants'
+import { ADAPTERS } from './adapters'
+import { WalletAdapter } from './adapters/WalletAdapter'
 import { Configuration } from './Configuration'
 import { Wallet, BrowserProvider, JsonRpcSigner, JsonRpcProvider } from 'ethers'
 
@@ -8,21 +11,31 @@ export class WalletService {
   public ready: Promise<void>
   public chainInfo: ChainInfo
 
+  private adapter: WalletAdapter
+
   constructor(public readonly config: Configuration) {
-    this.ready = this.initialize()
+    const chainInfo = NetworkChainMap[this.config.network]
+    this.chainInfo = chainInfo
+
+    const chainType = chainInfo.chainType
+    const WalletAdapter = ADAPTERS[chainType]
+
+    this.adapter = new WalletAdapter(this.config)
+    this.ready = this.adapter.initialize().then(() => {
+      this.signer = this.adapter.signer
+      this.address = this.adapter.address
+    })
   }
 
-  private async initialize() {
-    this.chainInfo = NetworkChainMap[this.config.network]
+  async signMessage(message: string) {
+    return await this.adapter.signMessage(message)
+  }
 
-    if (this.config.wallet === 'use_web_wallet') {
-      const provider = new BrowserProvider(window.ethereum)
-      this.signer = await provider.getSigner()
-    } else {
-      const provider = new JsonRpcProvider(this.chainInfo.rpcUrl)
-      this.signer = new Wallet(this.config.wallet, provider)
+  async getPublicKey() {
+    if (this.chainInfo.chainType !== ChainType.arweave) {
+      throw new Error('Arweave is the only supported chain for public key retrieval')
     }
 
-    this.address = await this.signer.getAddress()
+    return await this.adapter.getPublicKey()
   }
 }
