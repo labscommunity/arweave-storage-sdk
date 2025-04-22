@@ -35,6 +35,12 @@ export const NetworkChainMap: Record<Network, ChainInfo> = {
     chainType: ChainType.evm,
     network: ChainNetwork.Testnet,
     rpcUrl: 'https://sepolia.base.org'
+  },
+  [Network.ARWEAVE_MAINNET]: {
+    chainId: 1,
+    chainName: 'Arweave Mainnet',
+    chainType: ChainType.arweave,
+    network: ChainNetwork.Mainnet
   }
 }
 
@@ -43,7 +49,7 @@ export interface ChainInfo {
   chainName: string
   chainType: ChainType
   network: ChainNetwork
-  rpcUrl: string
+  rpcUrl?: string
 }
 
 export const BYTES_IN_MB = 1000000

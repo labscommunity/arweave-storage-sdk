@@ -17,29 +17,29 @@ async function main() {
   //Login
   await storageApiInstance.api.login()
 
-  const tags = [
-    { name: 'Content-Type', value: 'text/plain' },
-    { name: 'Arweave-Transaction', value: 'test' }
-  ] as Tag[]
+  // const tags = [
+  //   { name: 'Content-Type', value: 'text/plain' },
+  //   { name: 'Arweave-Transaction', value: 'test' }
+  // ] as Tag[]
 
-  const file = new Blob(['A demo file!'], { type: 'text/plain' })
-  const upload = await storageApiInstance.quickUpload(await file.arrayBuffer(), {
-    name: 'demo.txt',
-    dataContentType: 'text/plain',
-    tags,
-    size: file.size,
-    overrideFileName: true,
-    visibility: 'private'
-  })
-  console.log({ upload })
+  // const file = new Blob(['A demo file!'], { type: 'text/plain' })
+  // const upload = await storageApiInstance.quickUpload(await file.arrayBuffer(), {
+  //   name: 'demo.txt',
+  //   dataContentType: 'text/plain',
+  //   tags,
+  //   size: file.size,
+  //   overrideFileName: true,
+  //   visibility: 'private'
+  // })
+  // console.log({ upload })
 
   const profile = await storageApiInstance.api.getUser()
   console.log(profile)
 
-  await storageApiInstance.downloadFile({
-    uploadId: '',
-    path: './'
-  })
+    // await storageApiInstance.downloadFile({
+    //   uploadId: '',
+    //   path: './'
+    // })
 }
 
 main().catch(console.error)
