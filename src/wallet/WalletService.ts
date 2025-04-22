@@ -33,7 +33,7 @@ export class WalletService {
 
   async getPublicKey() {
     if (this.chainInfo.chainType !== ChainType.arweave) {
-      throw new Error('Arweave is the only supported chain for public key retrieval')
+      return null
     }
 
     return await this.adapter.getPublicKey()

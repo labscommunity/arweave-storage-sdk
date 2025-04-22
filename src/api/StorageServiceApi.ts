@@ -8,7 +8,9 @@ import { DriveService } from '../services/drive.service'
 import { FolderService } from '../services/folder.service'
 import { FileService } from '../services/file.service'
 import { Crypto } from '../crypto'
-import { EvmPaymentService } from '../services/evm-payment.service'
+import { ADAPTERS } from '../services/payment-adapters'
+import { PaymentAdapter } from '../services/payment-adapters/PaymentAdapter'
+import { VerifyAuthOptions } from './auth/types'
 
 export class StorageServiceApi {
   public auth: AuthClient
@@ -22,7 +24,7 @@ export class StorageServiceApi {
   public drive: DriveService | null = null
   public folder: FolderService | null = null
   public file: FileService | null = null
-  public payment: EvmPaymentService
+  public payment: PaymentAdapter
 
   baseTags: Tag[] = []
 
@@ -30,7 +32,10 @@ export class StorageServiceApi {
     this.wallet = wallet
     this.auth = new AuthClient()
     this.user = new UserClient()
-    this.payment = new EvmPaymentService(wallet) // TODO: after adding more chains, remove this
+
+    const paymentAdapter = new ADAPTERS[wallet.chainInfo.chainType](wallet) as PaymentAdapter
+
+    this.payment = paymentAdapter // TODO: after adding more chains, remove this
     this.upload = new UploadClient(this.payment, this.wallet)
 
     this.baseTags = baseTags
@@ -80,20 +85,17 @@ export class StorageServiceApi {
     Nonce: ${nonce}
     `
     const signature = await this.wallet.signMessage(message)
-    let publicKey
+    const publicKey = await this.wallet.getPublicKey()
 
-    try {
-      publicKey = await this.wallet.getPublicKey()
-    } catch (error) {
-      console.warn(error)
-    }
-
-    const payload = {
+    const payload: VerifyAuthOptions = {
       walletAddress: this.wallet.address,
       chainType: this.wallet.chainInfo.chainType,
       signedMessage: message,
-      signature,
-      publicKey
+      signature
+    }
+
+    if (publicKey) {
+      payload.publicKey = publicKey
     }
 
     await this.auth.verify(payload)

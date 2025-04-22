@@ -1,15 +1,16 @@
-import { Contract, JsonRpcSigner } from 'ethers'
-import { WalletService } from '../wallet/WalletService'
-import { PaymentDetails, TransactionReceipt } from './payment.service'
-import { PaymentService } from './payment.service'
+import { Contract } from "ethers";
+import { JsonRpcSigner } from 'ethers'
+import { WalletService } from '../../wallet/WalletService'
+import { TransactionReceipt, PaymentDetails } from './types'
+import { PaymentAdapter } from './PaymentAdapter'
 
-export class EvmPaymentService implements PaymentService {
+export class EvmAdapter implements PaymentAdapter {
   constructor(private wallet: WalletService) {}
 
   async executePayment(
     paymentDetail: PaymentDetails,
-    tokenAddress: string,
-    amount: bigint
+    amount: bigint,
+    tokenAddress: string
   ): Promise<TransactionReceipt> {
     const ERC20_ABI = ['function transfer(address recipient, uint256 amount) external returns (bool)']
     const signer = this.wallet.signer as JsonRpcSigner

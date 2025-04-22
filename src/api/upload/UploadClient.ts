@@ -17,7 +17,6 @@ import { DEFAULT_CHUNK_SIZE_IN_BYTES } from '../../utils/constants'
 import { FileLike, FileSource } from '../../types/file'
 import { ArweaveWallet } from '../../wallet/ArweaveWallet'
 import { Bundle, DataItem, bundleAndSignData, createData } from 'arbundles'
-import { EvmPaymentService } from '../../services/evm-payment.service'
 import { createFileLike } from '../../utils/createFileLike'
 import { applyFileTags, getSDKTags } from '../../utils/getSDKTags'
 import { WalletService } from '../../wallet/WalletService'
@@ -26,14 +25,15 @@ import { Crypto } from '../../crypto'
 import { isServer } from '../../utils/platform'
 import { importDynamic } from '../../utils/importDynamic'
 import { StreamConverter } from '../../utils/stream-converter'
+import { PaymentAdapter } from '../../services/payment-adapters/PaymentAdapter'
 
 export class UploadClient extends BackendClient {
   private arweaveWallet: ArweaveWallet | null = null
-  private payment: EvmPaymentService
+  private payment: PaymentAdapter
   private wallet: WalletService
   private crypto: Crypto
 
-  constructor(payment: EvmPaymentService, wallet: WalletService) {
+  constructor(payment: PaymentAdapter, wallet: WalletService) {
     super()
     this.payment = payment
     this.wallet = wallet
@@ -200,8 +200,8 @@ export class UploadClient extends BackendClient {
         amountInSubUnits: amount,
         payAddress: paymentDetails.payAddress
       },
-      token.address,
-      amountBn
+      amountBn,
+      token.address
     )
 
     tags.push({ name: 'Upload-Request-ID', value: uploadRequest.id } as Tag)
@@ -262,8 +262,8 @@ export class UploadClient extends BackendClient {
         amountInSubUnits: amount,
         payAddress: paymentDetails.payAddress
       },
-      token.address,
-      amountBn
+      amountBn,
+      token.address
     )
 
     dataItem.tags.push({ name: 'Upload-Request-ID', value: uploadRequest.id } as Tag)
