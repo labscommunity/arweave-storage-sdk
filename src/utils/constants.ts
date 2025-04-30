@@ -41,6 +41,12 @@ export const NetworkChainMap: Record<Network, ChainInfo> = {
     chainName: 'Arweave Mainnet',
     chainType: ChainType.arweave,
     network: ChainNetwork.Mainnet
+  },
+  [Network.COSMOS_NOBLE_MAINNET]: {
+    chainId: 1,
+    chainName: 'Cosmos Noble Mainnet',
+    chainType: ChainType.cosmos,
+    network: ChainNetwork.Mainnet
   }
 }
 

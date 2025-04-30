@@ -4,6 +4,7 @@ export enum Network {
   BASE_MAINNET = 'BASE_MAINNET',
   BASE_TESTNET = 'BASE_TESTNET',
   ARWEAVE_MAINNET = 'ARWEAVE_MAINNET',
+  COSMOS_NOBLE_MAINNET = "COSMOS_NOBLE_MAINNET"
 }
 
 export enum Token {
@@ -14,7 +15,8 @@ export enum Token {
 export enum ChainType {
   evm = 'evm',
   solana = 'solana',
-  arweave = 'arweave'
+  arweave = 'arweave',
+  cosmos = 'cosmos'
 }
 
 export enum ChainNetwork {
