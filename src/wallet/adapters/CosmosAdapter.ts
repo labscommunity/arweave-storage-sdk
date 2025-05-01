@@ -1,28 +1,63 @@
 // ArweaveAdapter.ts
 import { WalletAdapter } from './WalletAdapter'
 import { Configuration } from '../Configuration'
-import { arweaveInstance } from '../../utils/arweaveInstance'
 import { isServer } from '../../utils/platform'
-import { JWKInterface } from 'arweave/web/lib/wallet'
+import { makeSignDoc, Secp256k1Wallet } from '@cosmjs/amino'
+import { CosmosChainMap, NetworkChainMap } from '../../utils/constants'
+import { throwError } from '../../utils/errors/error-factory'
+import { encodeBase64 } from 'ethers'
 
 export class CosmosAdapter implements WalletAdapter {
-  public signer!: JWKInterface // arweave instance + key
+  public signer!: Secp256k1Wallet // arweave instance + key
   public address!: string
-
+  public publicKey!: string
   constructor(private readonly config: Configuration) {}
 
   async initialize() {
+    const network = this.config.network
+    const cosmosChain = NetworkChainMap[network]
+    const appChainId = CosmosChainMap[cosmosChain.chainId] // e.g., "noble-1"
+    const bech32Prefix = appChainId.split('-')[0] // Extract "noble"
+
     if (isServer() && this.config.wallet !== 'use_web_wallet') {
-      const walletJWK = JSON.parse(this.config.wallet)
-      this.signer = walletJWK as JWKInterface
-      this.address = await arweaveInstance.wallets.jwkToAddress(walletJWK)
+      if (!/^[0-9a-fA-F]{64}$/.test(this.config.wallet.slice(2))) {
+        throwError(500, 'CosmosAdapter: expected 64-char hex private key')
+      }
+      const privBytes = Uint8Array.from(Buffer.from(this.config.wallet.slice(2), 'hex'))
+      const walletObj = await Secp256k1Wallet.fromKey(privBytes, bech32Prefix)
+
+      this.signer = walletObj
+      const [acct] = await walletObj.getAccounts()
+      this.address = acct.address
+      this.publicKey = encodeBase64(acct.pubkey)
     } else {
-      this.signer = await arweaveInstance.wallets.generate()
-      this.address = await arweaveInstance.wallets.jwkToAddress(this.signer)
+      throwError(500, 'CosmosAdapter: use_web_wallet not supported')
     }
   }
 
-  signMessage(message: string): Promise<string> {
-    return Promise.resolve('')
+  async signMessage(message: string): Promise<string> {
+    const signDoc = makeSignDoc(
+      [
+        {
+          type: 'sign/MsgSignData',
+          value: {
+            signer: this.address,
+            data: message
+          }
+        }
+      ],
+      { gas: '0', amount: [] }, // StdFee
+      '', // chainId
+      '', // memo
+      0, // accountNumber
+      0 // sequence
+    )
+    const signRes = await this.signer.signAmino(this.address, signDoc)
+
+    return signRes.signature.signature
+  }
+
+  async getPublicKey() {
+    return this.publicKey
   }
 }

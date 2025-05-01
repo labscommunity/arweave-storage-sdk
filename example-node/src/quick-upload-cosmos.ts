@@ -34,7 +34,7 @@ async function main() {
 
   // await storageApiInstance.downloadFile({
   //   uploadId: 'f4196701-0274-4c25-b599-e3049af36402',
-  //   path: "./"
+  //   path: './'
   // })
 
   const profile = await storageApiInstance.api.getUser()

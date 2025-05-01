@@ -8,6 +8,7 @@
     "quick-upload": "ts-node ./src/quick-upload.ts",
     "quick-upload-tsx": "tsx ./src/quick-upload.ts",
     "quick-upload-arweave": "ts-node ./src/quick-upload-arweave.ts",
+    "quick-upload-cosmos": "ts-node ./src/quick-upload-cosmos.ts",
     "arfs": "ts-node ./src/arfs.ts",
     "quick-upload-private": "ts-node ./src/quick-upload-private.ts",
     "build": "tsc",

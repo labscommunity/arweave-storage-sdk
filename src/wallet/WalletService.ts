@@ -1,3 +1,4 @@
+import { Secp256k1Wallet } from '@cosmjs/amino'
 import { ChainType } from '../types'
 import { ChainInfo, NetworkChainMap } from '../utils/constants'
 import { ADAPTERS } from './adapters'
@@ -7,7 +8,7 @@ import { Wallet, BrowserProvider, JsonRpcSigner, JsonRpcProvider } from 'ethers'
 
 export class WalletService {
   public address: string | null = null
-  public signer: Wallet | JsonRpcSigner | null = null
+  public signer: Wallet | JsonRpcSigner | Secp256k1Wallet | null = null
   public ready: Promise<void>
   public chainInfo: ChainInfo
 
@@ -32,7 +33,7 @@ export class WalletService {
   }
 
   async getPublicKey() {
-    if (this.chainInfo.chainType !== ChainType.arweave) {
+    if (this.chainInfo.chainType !== ChainType.arweave && this.chainInfo.chainType !== ChainType.cosmos) {
       return null
     }
 

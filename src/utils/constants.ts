@@ -46,10 +46,14 @@ export const NetworkChainMap: Record<Network, ChainInfo> = {
     chainId: 1,
     chainName: 'Cosmos Noble Mainnet',
     chainType: ChainType.cosmos,
-    network: ChainNetwork.Mainnet
+    network: ChainNetwork.Mainnet,
+    rpcUrl: 'https://noble-rpc.polkachu.com'
   }
 }
 
+export const CosmosChainMap: Record<number, string> = {
+  1: 'noble-1'
+}
 export interface ChainInfo {
   chainId: number
   chainName: string
