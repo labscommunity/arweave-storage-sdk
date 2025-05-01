@@ -1,6 +1,6 @@
 {
   "name": "arweave-storage-sdk",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "ArFS based File System for web/backend",
   "files": [
     "dist/",
