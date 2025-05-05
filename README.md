@@ -239,6 +239,7 @@ const config = new Configuration({
 
 * **Encryption:** For private drives or file storage, use the built-in Crypto utilities to manage encryption.  
 * **API Calls:** The SDK uses the ArFSApi internally to interact with the Arweave network. You can override or customize gateway endpoints if needed.
+* **Terms of Service and Privacy Policy:** The link to the Terms of Service and Privacy Policy for the Arweave Data Storage SDK [Tos and Privacy Policy](https://github.com/labscommunity/arweave-storage-sdk/blob/main/Arweave%20Data%20Storage%20SDK%20-%20ToS%20and%20Privacy%20Policy.pdf)
 
 
   
