@@ -74,10 +74,30 @@ export class UploadClient extends BackendClient {
     }
 
     if (isServer()) {
+      const dataBuffer = Buffer.from(dataArrayBuffer)
+      if (skipSave) {
+        // JSON: parse and return JS object
+        if (mimeType.includes('application/json')) {
+          const text = dataBuffer.toString('utf-8')
+          try {
+            return JSON.parse(text)
+          } catch {
+            return text
+          }
+        }
+
+        // Plain text: return the string
+        if (mimeType.startsWith('text/')) {
+          return dataBuffer.toString('utf-8')
+        }
+
+        // Otherwise, return raw Buffer (caller can handle binary)
+        return dataBuffer
+      }
       const fs = await importDynamic('fs')
       return new Promise((resolve, reject) => {
         const filePath = `${path || process.cwd()}/${fileName}`
-        fs.writeFile(filePath, Buffer.from(dataArrayBuffer), (error) => {
+        fs.writeFile(filePath, dataBuffer, (error) => {
           if (error) reject(error)
           resolve(filePath)
         })
