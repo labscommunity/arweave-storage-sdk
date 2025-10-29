@@ -10,7 +10,7 @@ import { ArweaveWallet } from '../wallet/ArweaveWallet'
 import { UploadClient } from '../api/upload/UploadClient'
 import { FileLike, FileSource } from '../types/file'
 import { createFileLike } from '../utils/createFileLike'
-import { createData } from 'arbundles'
+import { createData } from '@dha-team/arbundles'
 import { applyFileTags, getSDKTags } from '../utils/getSDKTags'
 import { throwError } from '../utils/errors/error-factory'
 

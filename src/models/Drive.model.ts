@@ -1,6 +1,6 @@
 import { Tag } from 'arweave/web/lib/transaction'
 import { v4 as uuidv4 } from 'uuid'
-import { ArweaveSigner, createData } from 'arbundles'
+import { ArweaveSigner, createData } from '@dha-team/arbundles'
 
 import { EntityVisibility } from '../types'
 import { arweaveInstance } from '../utils/arweaveInstance'

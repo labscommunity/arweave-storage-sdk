@@ -1,5 +1,5 @@
 import Transaction from 'arweave/web/lib/transaction'
-import { DataItem } from 'warp-arbundles'
+import { DataItem } from '@dha-team/arbundles'
 // import { InjectedArweaveSigner } from 'warp-contracts-plugin-signature'
 
 import { APIOptions } from '../types/api'
@@ -27,12 +27,9 @@ export class ArFSApi {
   async getSigner() {
     // if (this.wallet === 'use_wallet') {
     //   const userSigner = new InjectedArweaveSigner(window.arweaveWallet)
-
     //   await userSigner.setPublicKey()
-
     //   return userSigner
     // }
-
     // return new ArweaveSigner(this.wallet)
   }
 
@@ -45,30 +42,30 @@ export class ArFSApi {
     // for (let i = 0; i < txList.length; i++) {
     //   const tx = txList[i]
 
-      // try {
-      //   if (this.wallet === 'use_wallet') {
-      //     await arweaveInstance.transactions.sign(tx as Transaction, this.wallet)
+    // try {
+    //   if (this.wallet === 'use_wallet') {
+    //     await arweaveInstance.transactions.sign(tx as Transaction, this.wallet)
 
-      //     const txId = await arweaveUpload(tx as Transaction)
-      //     txIds.push(txId)
+    //     const txId = await arweaveUpload(tx as Transaction)
+    //     txIds.push(txId)
 
-      //     continue
-      //   }
-      //   if (tx instanceof Transaction) {
-      //     await arweaveInstance.transactions.sign(tx, this.wallet)
+    //     continue
+    //   }
+    //   if (tx instanceof Transaction) {
+    //     await arweaveInstance.transactions.sign(tx, this.wallet)
 
-      //     const txId = await arweaveUpload(tx)
-      //     txIds.push(txId)
-      //   }
-      //   if (tx instanceof DataItem) {
-      //     await tx.sign(signer)
+    //     const txId = await arweaveUpload(tx)
+    //     txIds.push(txId)
+    //   }
+    //   if (tx instanceof DataItem) {
+    //     await tx.sign(signer)
 
-      //     const txId = await turboUpload(tx)
-      //     txIds.push(txId)
-      //   }
-      // } catch (_) {
-      //   failedTxIndex.push(i)
-      // }
+    //     const txId = await turboUpload(tx)
+    //     txIds.push(txId)
+    //   }
+    // } catch (_) {
+    //   failedTxIndex.push(i)
+    // }
     // }
 
     return { successTxIds: txList as any, failedTxIndex }

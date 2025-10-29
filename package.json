@@ -52,9 +52,9 @@
     "@cosmjs/amino": "^0.33.1",
     "@cosmjs/proto-signing": "^0.33.1",
     "@cosmjs/stargate": "^0.33.1",
+    "@dha-team/arbundles": "^1.0.4",
     "agentkeepalive": "^4.6.0",
     "ar-gql": "^1.2.9",
-    "arbundles": "^0.11.2",
     "arweave": "^1.14.4",
     "axios": "^1.8.1",
     "ethers": "^6.13.5",
@@ -63,8 +63,6 @@
     "level": "^9.0.0",
     "mime-types": "^2.1.35",
     "uuid": "^9.0.0",
-    "warp-arbundles": "^1.0.4",
-    "warp-contracts-plugin-signature": "^1.0.20",
     "web-streams-polyfill": "^4.1.0"
   }
 }

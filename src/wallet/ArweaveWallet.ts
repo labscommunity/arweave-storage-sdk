@@ -1,4 +1,4 @@
-import { ArweaveSigner, DataItem, createData } from 'arbundles'
+import { ArweaveSigner, DataItem, createData } from '@dha-team/arbundles'
 import { JWKInterface } from 'arweave/web/lib/wallet'
 import { Tag } from 'arweave/web/lib/transaction'
 import { QueryBuilder } from '../api/query/queryBuilder'

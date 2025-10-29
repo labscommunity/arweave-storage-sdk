@@ -16,7 +16,7 @@ import {
 import { DEFAULT_CHUNK_SIZE_IN_BYTES } from '../../utils/constants'
 import { FileLike, FileSource } from '../../types/file'
 import { ArweaveWallet } from '../../wallet/ArweaveWallet'
-import { Bundle, DataItem, bundleAndSignData, createData } from 'arbundles'
+import { Bundle, DataItem, bundleAndSignData, createData } from '@dha-team/arbundles'
 import { createFileLike } from '../../utils/createFileLike'
 import { applyFileTags, getSDKTags } from '../../utils/getSDKTags'
 import { WalletService } from '../../wallet/WalletService'
