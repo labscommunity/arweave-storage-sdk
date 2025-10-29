@@ -16,5 +16,9 @@ export const tsup: Options = {
   entry: ['src/index.ts'], // Only build the main entry point
   shims: true,
   sourcemap: true,
-  tsconfig: './tsconfig.json'
+  tsconfig: './tsconfig.json',
+  external: [
+    '**/__tests__/**', // exclude test folders
+    '**/*.test.*' // exclude test files
+  ]
 }
