@@ -20,9 +20,9 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "test": "jest",
-    "build": "NODE_ENV=production tsup",
-    "build:dev": "NODE_ENV=development tsup",
-    "dev": "NODE_ENV=development tsup --watch",
+    "build": "cross-env NODE_ENV=production tsup",
+    "build:dev": "cross-env NODE_ENV=development tsup",
+    "dev": "cross-env NODE_ENV=development tsup --watch",
     "watch": "npm run dev",
     "prepublishOnly": "npm run build"
   },
@@ -36,6 +36,7 @@
     "@types/uuid": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
+    "cross-env": "^10.1.0",
     "eslint": "^8.45.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-anti-trojan-source": "^1.1.1",

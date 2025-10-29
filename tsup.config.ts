@@ -6,6 +6,7 @@ const common: Options = {
   splitting: false,
   clean: true, // clean up the dist folder
   bundle: true,
+  entry: ['src/index.ts', '!src/**/__tests__/**', '!src/**/*.test.*', '!src/mocks/**/*.ts'], //include all files under src
   skipNodeModulesBundle: true,
   target: 'es2015',
   outDir: 'dist',
@@ -18,7 +19,6 @@ const node: Options = {
   dts: true, // generate dts files
   format: ['cjs', 'esm'], // Node.js and ES modules only
   minify: env === 'production',
-  entry: ['src/**/*.ts', '!src/**/__tests__/**', '!src/**/*.test.*', '!src/mocks/**/*.ts'], //include all files under src
   sourcemap: true,
   ...common
 }
@@ -28,7 +28,6 @@ const iife: Options = {
   dts: false, // No types for IIFE
   format: ['iife'], // Only IIFE format
   minify: true,
-  entry: ['src/index.ts', '!src/**/__tests__/**', '!src/**/*.test.*', '!src/mocks/**/*.ts'], //include all files under src
   sourcemap: false,
   ...common
 }
