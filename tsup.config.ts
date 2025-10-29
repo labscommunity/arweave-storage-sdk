@@ -11,11 +11,10 @@ export const tsup: Options = {
   bundle: true,
   skipNodeModulesBundle: true,
   entryPoints: ['src/index.ts'],
-  watch: env === 'development',
   target: 'es2015',
   outDir: 'dist',
-  entry: ['src/**/*.ts', '!src/**/__tests__/**', '!src/**/*.test.*'], //include all files under src
+  entry: ['src/index.ts'], // Only build the main entry point
   shims: true,
-  sourcemap: true,
+  sourcemap: env !== 'production', // Only generate source maps in development
   tsconfig: './tsconfig.json'
 }

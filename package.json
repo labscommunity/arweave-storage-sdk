@@ -20,7 +20,11 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "test": "jest",
-    "build": "tsup"
+    "build": "NODE_ENV=production tsup",
+    "build:dev": "NODE_ENV=development tsup",
+    "dev": "NODE_ENV=development tsup --watch",
+    "watch": "npm run dev",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [],
   "author": "Sai Kranthi Sabavath",
