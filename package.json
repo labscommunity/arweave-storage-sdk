@@ -20,9 +20,10 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "test": "jest",
-    "build": "cross-env NODE_ENV=production tsup",
-    "build:dev": "cross-env NODE_ENV=development tsup",
-    "dev": "cross-env NODE_ENV=development tsup --watch",
+    "clean": "node scripts/clean-dist.mjs",
+    "build": "npm run clean && cross-env NODE_ENV=production tsup",
+    "build:dev": "npm run clean && cross-env NODE_ENV=development tsup",
+    "dev": "npm run clean && cross-env NODE_ENV=development tsup --watch",
     "watch": "npm run dev",
     "prepublishOnly": "npm run build"
   },

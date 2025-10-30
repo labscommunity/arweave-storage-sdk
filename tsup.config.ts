@@ -5,7 +5,6 @@ const env = process.env.NODE_ENV
 
 const common: Options = {
   splitting: false,
-  clean: true, // clean up the dist folder
   bundle: true,
   entry: ['src/index.ts', '!src/**/__tests__/**', '!src/**/*.test.*', '!src/mocks/**/*.ts'], //include all files under src
   skipNodeModulesBundle: true,
