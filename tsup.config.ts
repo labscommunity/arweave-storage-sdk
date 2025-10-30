@@ -44,7 +44,9 @@ const iifeOptions: Options = {
   esbuildOptions: (options) => {
     options.alias = {
       crypto: 'crypto-browserify',
-      stream: 'stream-browserify'
+      stream: 'stream-browserify',
+      events: 'events',
+      buffer: 'buffer'
     }
   },
   ...common
