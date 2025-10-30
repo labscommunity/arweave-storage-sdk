@@ -20,13 +20,15 @@ export class ArweaveAdapter implements WalletAdapter {
       this.address = await arweaveInstance.wallets.jwkToAddress(walletJWK)
     } else {
       this.signer = 'use_wallet'
+      await window.arweaveWallet.connect(['ACCESS_ADDRESS', 'ACCESS_PUBLIC_KEY', 'SIGNATURE', 'SIGN_TRANSACTION'])
       this.address = await arweaveInstance.wallets.jwkToAddress('use_wallet')
     }
   }
 
   async signMessage(message: string) {
     if (this.signer === 'use_wallet') {
-      const signature = await window.arweaveWallet.signMessage(message)
+      const messageBuffer = arweaveInstance.utils.stringToBuffer(message)
+      const signature = await window.arweaveWallet.signMessage(messageBuffer)
       const base64Signature = arweaveInstance.utils.bufferTob64(signature)
 
       return base64Signature
@@ -43,7 +45,8 @@ export class ArweaveAdapter implements WalletAdapter {
       ['sign']
     )
 
-    const hash = await crypto.subtle.digest('SHA-256', arweaveInstance.utils.stringToBuffer(message))
+    const messageBuffer = Buffer.from(arweaveInstance.utils.stringToBuffer(message))
+    const hash = await crypto.subtle.digest('SHA-256', messageBuffer)
     const signature = await crypto.subtle.sign({ name: 'RSA-PSS', saltLength: 32 }, cryptoKey, hash)
     const base64Signature = arrayToBase64(signature)
 

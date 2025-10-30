@@ -38,7 +38,7 @@ export class StorageApi {
   }
 
   async downloadFile(options: DownloadFileOptions) {
-    await this.api.upload.downloadFile(options)
+    return this.api.upload.downloadFile(options)
   }
 
   async getEstimates(size: number) {
