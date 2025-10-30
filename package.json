@@ -30,6 +30,7 @@
   "author": "Sai Kranthi Sabavath",
   "license": "ISC",
   "devDependencies": {
+    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@types/jest": "^29.5.12",
     "@types/jsdom": "^21.1.6",
     "@types/node": "^20.6.0",
@@ -37,6 +38,7 @@
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "cross-env": "^10.1.0",
+    "crypto-browserify": "^3.12.1",
     "eslint": "^8.45.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-anti-trojan-source": "^1.1.1",
@@ -48,6 +50,7 @@
     "jest": "^29.7.0",
     "jsdom": "^24.0.0",
     "prettier": "^3.0.1",
+    "stream-browserify": "^3.0.0",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
     "tsup": "^7.2.0",

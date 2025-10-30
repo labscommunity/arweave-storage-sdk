@@ -1,4 +1,5 @@
 import type { Options } from 'tsup'
+import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill'
 
 const env = process.env.NODE_ENV
 
@@ -8,28 +9,45 @@ const common: Options = {
   bundle: true,
   entry: ['src/index.ts', '!src/**/__tests__/**', '!src/**/*.test.*', '!src/mocks/**/*.ts'], //include all files under src
   skipNodeModulesBundle: true,
-  target: 'es2015',
+  target: 'es2020',
   outDir: 'dist',
   shims: true,
   tsconfig: './tsconfig.json'
 }
 
-// Node.js configuration
-const node: Options = {
+// CJS/ESM configuration
+const cjsEsmOptions: Options = {
   dts: true, // generate dts files
-  format: ['cjs', 'esm'], // Node.js and ES modules only
+  format: ['cjs', 'esm'], // CJS / ESM modules only
   minify: env === 'production',
   sourcemap: true,
   ...common
 }
 
-// IIFE configuration
-const iife: Options = {
+// IIFE (Global) configuration
+const iifeOptions: Options = {
   dts: false, // No types for IIFE
   format: ['iife'], // Only IIFE format
   minify: true,
   sourcemap: false,
+  globalName: 'ArweaveStorageSDK',
+  platform: 'browser',
+  banner: {
+    js: `if (typeof global === 'undefined') {var global = globalThis;}`
+  },
+  esbuildPlugins: [
+    NodeGlobalsPolyfillPlugin({
+      process: true,
+      buffer: true
+    })
+  ],
+  esbuildOptions: (options) => {
+    options.alias = {
+      crypto: 'crypto-browserify',
+      stream: 'stream-browserify'
+    }
+  },
   ...common
 }
 
-export default [node, iife]
+export default [cjsEsmOptions, iifeOptions]
