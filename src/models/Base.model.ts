@@ -1,5 +1,5 @@
 import Transaction, { Tag } from 'arweave/web/lib/transaction'
-import { DataItem } from 'arbundles'
+import { DataItem } from '@dha-team/arbundles'
 
 import { UnixTime } from '../utils/UnixTime'
 

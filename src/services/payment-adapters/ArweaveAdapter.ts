@@ -9,26 +9,16 @@ export class ArweaveAdapter implements PaymentAdapter {
   constructor(private wallet: WalletService) {}
 
   async executePayment(paymentDetail: PaymentDetails, amount: bigint): Promise<TransactionReceipt> {
-    const tx = await arweaveInstance.createTransaction({ quantity: paymentDetail.amountInSubUnits, target: paymentDetail.payAddress })
+    const tx = await arweaveInstance.createTransaction({
+      quantity: paymentDetail.amountInSubUnits,
+      target: paymentDetail.payAddress
+    })
 
-    if (isServer()) {
-      const signer = this.wallet.signer as unknown as JWKInterface
-      await arweaveInstance.transactions.sign(tx, signer)
-      const response = await arweaveInstance.transactions.post(tx)
+    const signer = isServer() ? (this.wallet.signer as unknown as JWKInterface) : 'use_wallet'
+    await arweaveInstance.transactions.sign(tx, signer)
+    const response = await arweaveInstance.transactions.post(tx)
 
-      if (response.status !== 200) {
-        throw new Error('Payment transaction for upload failed')
-      }
-
-      return {
-        hash: tx.id,
-        status: 1
-      }
-    }
-
-    const res = await window.arweaveWallet.dispatch(tx)
-
-    if (!res.id) {
+    if (response.status !== 200) {
       throw new Error('Payment transaction for upload failed')
     }
 

@@ -1,5 +1,5 @@
 import Transaction, { Tag } from 'arweave/web/lib/transaction'
-import { DataItem } from 'warp-arbundles'
+import { DataItem } from '@dha-team/arbundles'
 
 import { Drive, File, Folder } from '../models'
 

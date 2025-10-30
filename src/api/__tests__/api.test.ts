@@ -1,7 +1,6 @@
 import { JWKInterface } from 'arweave/node/lib/wallet'
 import Transaction from 'arweave/web/lib/transaction'
-import { ArweaveSigner } from 'warp-arbundles'
-import { InjectedArweaveSigner } from 'warp-contracts-plugin-signature'
+import { ArweaveSigner, ArconnectSigner as InjectedArweaveSigner } from '@dha-team/arbundles'
 
 import { _Window, arweaveWallet } from '../../mocks/windowArWallet'
 import { arweaveInstance } from '../../utils/arweaveInstance'

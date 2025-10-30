@@ -1,5 +1,5 @@
 import Transaction from 'arweave/web/lib/transaction'
-import { DataItem } from 'warp-arbundles'
+import { DataItem } from '@dha-team/arbundles'
 
 import { arweaveInstance } from './arweaveInstance'
 
