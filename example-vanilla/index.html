@@ -293,18 +293,11 @@
         // Ensure auth + arweave wallet initialization
         await sdk.api.login()
         // Ask SDK to fetch file but skip auto-save in browser
-        const url = await sdk.downloadFile({ uploadId, skipSave: true })
+        const url = await sdk.downloadFile({ uploadId })
 
         if (!url) throw new Error('Failed to get file URL.')
 
         updateProgress(90)
-        // Save to disk via anchor (let browser pick name)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = ''
-        document.body.appendChild(a)
-        a.click()
-        a.remove()
 
         updateProgress(100)
         showStatus('Download started.', 'success')

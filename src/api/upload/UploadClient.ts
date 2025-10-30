@@ -63,6 +63,7 @@ export class UploadClient extends BackendClient {
     const { arweaveTxId, fileName, mimeType, skipSave, path, uploadId } = options
 
     const txDataRes = await fetch(`https://arweave.net/${arweaveTxId}`)
+    const contentType = txDataRes.headers.get('content-type')
     let dataArrayBuffer = await txDataRes.arrayBuffer()
 
     const cipherIV = await this.arweaveWallet.queryEngine?.argql.fetchTxTag(arweaveTxId, 'Cipher-IV')
@@ -83,13 +84,14 @@ export class UploadClient extends BackendClient {
         })
       })
     } else {
-      const blob = new Blob([dataArrayBuffer], { type: mimeType })
+      const blob = new Blob([dataArrayBuffer], { type: mimeType || contentType })
       const url = window.URL.createObjectURL(blob)
       if (!skipSave) {
         const a = document.createElement('a')
-        a.download = path
+        a.download = fileName
         a.href = url
         a.click()
+        a.remove()
       }
       return url
     }
